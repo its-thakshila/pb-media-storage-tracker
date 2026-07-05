@@ -74,7 +74,7 @@ a { color: inherit; text-decoration: none; }
   justify-content: space-between;
   height: 56px;
   gap: 8px;
-  overflow: hidden; /* prevent nav from causing page-level overflow */
+  /* No overflow:hidden here — that would clip the user dropdown that hangs below the nav */
 }
 .nav-logo {
   display: flex;
@@ -524,6 +524,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   display: inline-flex;
   align-items: flex-start; /* text aligns to top when wrapped */
   line-height: 1.4;
+  max-width: 100%; /* constrain to parent width so text wraps instead of overflowing */
 }
 .timeline-note {
   font-size: 0.8125rem;
@@ -664,8 +665,9 @@ html, body { overflow-x: hidden; }
   .form-row { flex-direction: column; gap: 0; }
   /* Login */
   .login-card { padding: 36px 24px; margin: 16px; }
-  /* Container */
-  .container { padding: 0 12px; }
+  /* Container: override only horizontal padding — do NOT use shorthand here
+     because shorthand `padding: 0 12px` would also zero out view-body's 24px top padding */
+  .container { padding-left: 12px; padding-right: 12px; }
   /* Table on mobile: hide capacity & note cols */
   .device-table th:nth-child(3),
   .device-table td:nth-child(3),
