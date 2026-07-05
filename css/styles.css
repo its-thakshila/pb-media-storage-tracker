@@ -515,6 +515,16 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   word-break: break-word;
   text-align: left; /* always left — badges must not centre on mobile */
 }
+/* Timeline badges may contain long names — allow wrapping, keep left-aligned */
+.timeline-desc .badge {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  text-align: left;
+  display: inline-flex;
+  align-items: flex-start; /* text aligns to top when wrapped */
+  line-height: 1.4;
+}
 .timeline-note {
   font-size: 0.8125rem;
   color: var(--text-secondary);
@@ -667,11 +677,9 @@ html, body { overflow-x: hidden; }
   .pending-item { padding: 12px 14px; }
   /* Remove badge wrapping — let overflow-wrap handle it instead */
   .badge { white-space: nowrap; }
-  /* Gap between nav and first card in pending + history views */
-  #view-pending .view-body  > .card:first-child,
-  #view-history .view-body  > div:first-child { margin-top: 4px; }
-  /* Gap between back-button row and history card */
-  #view-history .view-body > div:first-child { margin-bottom: 10px; }
+  /* Gap: all views already get 24px from .view-body padding — no extra margin needed */
+  /* History: space between back-button row and the card below it */
+  #view-history .view-body > div:first-child { margin-bottom: 8px; }
 }
 @media (min-width: 601px) and (max-width: 768px) {
   .nav-tabs .nav-tab { padding: 8px 10px; }
