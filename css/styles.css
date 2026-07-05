@@ -513,6 +513,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   font-weight: 500;
   overflow-wrap: break-word;
   word-break: break-word;
+  text-align: left; /* always left — badges must not centre on mobile */
 }
 .timeline-note {
   font-size: 0.8125rem;
@@ -527,6 +528,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 
 /* ── Pending Actions Card ───────────────────────────────────── */
+#pending-content { overflow-x: hidden; } /* guard against wide content */
 .pending-item {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -537,6 +539,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 12px;
   margin-bottom: 10px;
   animation: fadeUp 0.2s ease both;
+  overflow: hidden; /* belt-and-braces overflow guard */
 }
 .pending-item:last-child { margin-bottom: 0; }
 .pending-info { flex: 1; min-width: 0; }
@@ -660,10 +663,15 @@ html, body { overflow-x: hidden; }
   .device-table td:nth-child(6) { display: none; }
   /* Toast */
   #toast-container { right: 12px; bottom: 12px; }
-  /* Pending cards: side-by-side row on small screen */
+  /* Pending cards */
   .pending-item { padding: 12px 14px; }
-  /* Badge wrapping */
-  .badge { white-space: normal; text-align: center; }
+  /* Remove badge wrapping — let overflow-wrap handle it instead */
+  .badge { white-space: nowrap; }
+  /* Gap between nav and first card in pending + history views */
+  #view-pending .view-body  > .card:first-child,
+  #view-history .view-body  > div:first-child { margin-top: 4px; }
+  /* Gap between back-button row and history card */
+  #view-history .view-body > div:first-child { margin-bottom: 10px; }
 }
 @media (min-width: 601px) and (max-width: 768px) {
   .nav-tabs .nav-tab { padding: 8px 10px; }

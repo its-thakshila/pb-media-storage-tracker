@@ -46,10 +46,10 @@ const HistoryView = (() => {
                  desc: `${Icons.pin()} ${esc(t.actorName)} kept the device` };
       case 'TransferInitiated':
         return { dotClass: 'dot-pending',   badgeClass: 'badge-pending',
-                 desc: `${Icons.arrowRight()} ${esc(t.actorName)} - ${esc(t.counterpartyName)} (pending)` };
+                 desc: `${Icons.arrowRight()} ${esc(t.actorName)} to ${esc(t.counterpartyName)} (pending)` };
       case 'TransferConfirmed':
         return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
-                 desc: `${Icons.check()} Transfer confirmed: ${esc(t.counterpartyName)} - ${esc(t.actorName)}` };
+                 desc: `${Icons.check()} Confirmed: ${esc(t.counterpartyName)} to ${esc(t.actorName)}` };
       case 'TransferDeclined':
         return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
                  desc: `${Icons.x()} ${esc(t.actorName)} declined transfer from ${esc(t.counterpartyName)}` };
