@@ -1,0 +1,54 @@
+// ============================================================
+//  api.js — Fetch wrapper for the Apps Script backend
+//  Uses Content-Type: text/plain to avoid CORS preflight (spec §12)
+// ============================================================
+
+const API = (() => {
+
+  async function call(action, payload = {}) {
+    const idToken = Auth.getToken();
+    if (!idToken && action !== "authCheck") {
+      throw new Error("Not authenticated.");
+    }
+
+    const body = JSON.stringify({ action, idToken, payload });
+
+    let response;
+    try {
+      response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body,
+      });
+    } catch (networkErr) {
+      throw new Error("Network error — check your connection and try again.");
+    }
+
+    if (!response.ok) {
+      throw new Error("Server returned HTTP " + response.status + ". Try again.");
+    }
+
+    const json = await response.json();
+    if (!json.success) {
+      throw new Error(json.error || "An unknown error occurred.");
+    }
+    return json.data;
+  }
+
+  return {
+    authCheck:           (payload = {}) => call("authCheck", payload),
+    listDevices:         ()             => call("listDevices"),
+    getDeviceHistory:    (deviceLabel)  => call("getDeviceHistory",  { deviceLabel }),
+    listMembers:         ()             => call("listMembers"),
+    getPendingActions:   ()             => call("getPendingActions"),
+    logKept:             (p)            => call("logKept",            p),
+    initiateTransfer:    (p)            => call("initiateTransfer",   p),
+    respondToTransfer:   (p)            => call("respondToTransfer",  p),
+    logNewbieHandoff:    (p)            => call("logNewbieHandoff",   p),
+    reportLostDamaged:   (p)            => call("reportLostDamaged",  p),
+    addDevice:           (p)            => call("addDevice",          p),
+    approveMember:       (p)            => call("approveMember",      p),
+    removeMember:        (p)            => call("removeMember",       p),
+    correctLogEntry:     (p)            => call("correctLogEntry",    p),
+  };
+})();
