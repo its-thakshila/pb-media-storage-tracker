@@ -349,6 +349,10 @@ a {
   box-shadow: var(--shadow-card);
 }
 
+.card+.card {
+  margin-top: 16px;
+}
+
 .section-header {
   display: flex;
   align-items: center;
