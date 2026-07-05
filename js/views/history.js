@@ -21,15 +21,19 @@ const HistoryView = (() => {
     const rows = items.map(t => {
       const { dotClass, desc, badgeClass } = formatEntry(t);
       return `<li class="timeline-item">
-        <div class="timeline-dot ${dotClass}"></div>
-        <div class="timeline-time">${formatTimestamp(t.timestamp)}</div>
-        <div class="timeline-desc">
-          <span class="badge ${badgeClass}">${desc}</span>
+        <div class="timeline-dot-col">
+          <div class="timeline-dot ${dotClass}"></div>
         </div>
-        ${t.notes        ? `<div class="timeline-note">${esc(t.notes)}</div>` : ''}
-        ${t.cameraModel  ? `<div class="timeline-note">${Icons.camera()} ${esc(t.cameraModel)}</div>` : ''}
-        ${t.newbieName   ? `<div class="timeline-note">${Icons.user()} ${esc(t.newbieName)}</div>` : ''}
-        ${t.linkedTransactionId ? `<div class="timeline-note" style="font-size:.75rem;color:var(--text-secondary)">Ref: ${esc(t.linkedTransactionId)}</div>` : ''}
+        <div class="timeline-content">
+          <div class="timeline-time">${formatTimestamp(t.timestamp)}</div>
+          <div class="timeline-desc">
+            <span class="badge ${badgeClass}">${desc}</span>
+          </div>
+          ${t.notes        ? `<div class="timeline-note">${esc(t.notes)}</div>` : ''}
+          ${t.cameraModel  ? `<div class="timeline-note">${Icons.camera()} ${esc(t.cameraModel)}</div>` : ''}
+          ${t.newbieName   ? `<div class="timeline-note">${Icons.user()} ${esc(t.newbieName)}</div>` : ''}
+          ${t.linkedTransactionId ? `<div class="timeline-note" style="font-size:.75rem">Ref: ${esc(t.linkedTransactionId)}</div>` : ''}
+        </div>
       </li>`;
     }).join('');
     return `<ul class="timeline">${rows}</ul>`;

@@ -133,14 +133,14 @@ const HomeView = (() => {
 
     const actions = [];
     if (isHolder && device.status === 'Active' && !device.hasPendingTransferTo) {
-      actions.push(`<button class="btn btn-primary btn-full" onclick="UpdateView.openKept('${esc(label)}');Modal.close()">${Icons.pin()} Kept with me</button>`);
-      actions.push(`<button class="btn btn-primary btn-full" onclick="UpdateView.openHandOver('${esc(label)}');Modal.close()">${Icons.arrowRight()} Hand Over</button>`);
-      actions.push(`<button class="btn btn-secondary btn-full" onclick="UpdateView.openNewbie('${esc(label)}');Modal.close()">${Icons.user()} Gave to a Newbie</button>`);
-      actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="UpdateView.openLostDamaged('${esc(label)}');Modal.close()">${Icons.flag()} Report Lost / Damaged</button>`);
+      actions.push(`<button class="btn btn-primary btn-full" onclick="Modal.close();UpdateView.openKept('${esc(label)}')">${Icons.pin()} Kept with me</button>`);
+      actions.push(`<button class="btn btn-primary btn-full" onclick="Modal.close();UpdateView.openHandOver('${esc(label)}')">${Icons.arrowRight()} Hand Over</button>`);
+      actions.push(`<button class="btn btn-secondary btn-full" onclick="Modal.close();UpdateView.openNewbie('${esc(label)}')">${Icons.user()} Gave to a Newbie</button>`);
+      actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="Modal.close();UpdateView.openLostDamaged('${esc(label)}')">${Icons.flag()} Report Lost / Damaged</button>`);
     } else if (isAdmin && device.status === 'Active') {
-      actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="UpdateView.openLostDamaged('${esc(label)}');Modal.close()">${Icons.flag()} Report Lost / Damaged</button>`);
+      actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="Modal.close();UpdateView.openLostDamaged('${esc(label)}')">${Icons.flag()} Report Lost / Damaged</button>`);
     }
-    actions.push(`<button class="btn btn-secondary btn-full" onclick="HistoryView.load('${esc(label)}');Modal.close()">${Icons.clock()} View History</button>`);
+    actions.push(`<button class="btn btn-secondary btn-full" onclick="Modal.close();HistoryView.load('${esc(label)}')">${Icons.clock()} View History</button>`);
 
     Modal.open({
       title: label,
