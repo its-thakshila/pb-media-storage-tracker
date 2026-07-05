@@ -62,8 +62,8 @@ const HomeView = (() => {
             ${buildStatusBadge(d)}
           </div>
           <div class="device-card-bottom">
-            <span class="text-muted" style="font-size:.8rem">${esc(d.deviceType)} - ${esc(d.capacity)}</span>
-            <span class="text-muted" style="font-size:.8rem">${buildHolderText(d)}</span>
+            <span>${esc(d.deviceType)} - ${esc(d.capacity)}</span>
+            <span>${buildHolderText(d)}</span>
           </div>
           ${d.physicallyWithNote ? `<div class="device-card-note"><span class="badge badge-newbie">${Icons.user()} Newbie</span></div>` : ''}
         </div>`;

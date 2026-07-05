@@ -349,9 +349,8 @@ a {
   box-shadow: var(--shadow-card);
 }
 
-.card+.card {
-  margin-top: 16px;
-}
+/* Spacing between sibling cards is handled per-use-site via inline margin-top
+   to avoid ghost gaps from display:none siblings matching the + combinator. */
 
 .section-header {
   display: flex;
@@ -853,6 +852,17 @@ textarea.form-control {
 
 /* full-width equal buttons on mobile */
 
+/* Subtle auto-poll timestamp */
+.pending-timestamp {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  opacity: 0.55;
+  text-align: right;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
 /* ── Skeleton Loader ────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, var(--bg-surface-raised) 25%, rgba(255, 255, 255, 0.05) 50%, var(--bg-surface-raised) 75%);
@@ -1151,9 +1161,15 @@ body {
 
 .device-card-bottom {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column; /* stack type+capacity and holder text on separate lines */
+  gap: 3px;
+}
+.device-card-bottom span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* truncate with … instead of wrapping */
+  font-size: .8rem;
+  color: var(--text-secondary);
 }
 
 .device-card-note {
