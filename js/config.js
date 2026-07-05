@@ -8,5 +8,5 @@
 
 const CONFIG = {
   OAUTH_CLIENT_ID: "812045761718-qh784i5vtvsbna3gma0chjrp8djii6bn.apps.googleusercontent.com",
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyCiqtIB0KQMfWK6TsWsvu3TfEKv-p510KHyPAkx687i6GIVWpPkUdjFP7gd1tPr-nR/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzAgyb3dwQq5Cw4-k1EfPMSRbVJFMy_vj8sMzwmQomvX0BZwGkHFBGdZq50Itv7fM1m/exec",
 };
