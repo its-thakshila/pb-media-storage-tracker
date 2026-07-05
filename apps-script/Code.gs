@@ -14,6 +14,16 @@ const SHEET_MEMBERS      = "Members";
 const SHEET_DEVICES      = "Devices";
 const SHEET_TRANSACTIONS = "Transactions";
 
+// ── SERVER-SIDE CACHE (CacheService, max 6h TTL) ─────────────
+// Caching listDevices + listMembers avoids re-reading the Sheet on every call.
+// Any write operation calls _invalidateCache() to force a fresh read next time.
+const CACHE_KEY_DEVICES = "pb_devices_v1";
+const CACHE_KEY_MEMBERS = "pb_members_v1";
+const CACHE_TTL_SEC     = 300; // 5 minutes
+
+function _getCache()          { return CacheService.getScriptCache(); }
+function _invalidateCache()   { _getCache().removeAll([CACHE_KEY_DEVICES, CACHE_KEY_MEMBERS]); }
+
 // ── doPost entry point ──────────────────────────────────────
 function doPost(e) {
   try {
@@ -234,9 +244,13 @@ function actionAuthCheck(caller) {
 
 // ── listDevices ──────────────────────────────────────────────
 function actionListDevices(caller) {
+  const cache    = _getCache();
+  const cached   = cache.get(CACHE_KEY_DEVICES);
+  if (cached) return JSON.parse(cached);
+
   const devices    = getSheetData(SHEET_DEVICES);
   const membersMap = getMembersMap();
-  return devices.map(d => ({
+  const result = devices.map(d => ({
     deviceLabel:          d.DeviceLabel,
     deviceType:           d.DeviceType,
     capacity:             d.Capacity,
@@ -248,6 +262,9 @@ function actionListDevices(caller) {
     lastUpdated:          d.LastUpdated,
     physicallyWithNote:   d.PhysicallyWithNote || ""
   }));
+
+  try { cache.put(CACHE_KEY_DEVICES, JSON.stringify(result), CACHE_TTL_SEC); } catch(_) {}
+  return result;
 }
 
 // ── getDeviceHistory ─────────────────────────────────────────
@@ -277,10 +294,17 @@ function actionGetDeviceHistory(caller, payload) {
 
 // ── listMembers ──────────────────────────────────────────────
 function actionListMembers(caller) {
-  const rows = getSheetData(SHEET_MEMBERS);
-  return rows
+  const cache  = _getCache();
+  const cached = cache.get(CACHE_KEY_MEMBERS);
+  if (cached) return JSON.parse(cached);
+
+  const rows   = getSheetData(SHEET_MEMBERS);
+  const result = rows
     .filter(r => r.Active === "Y")
     .map(r => ({ email: r.Email, name: r.Name, role: r.Role, title: r.Title || "" }));
+
+  try { cache.put(CACHE_KEY_MEMBERS, JSON.stringify(result), CACHE_TTL_SEC); } catch(_) {}
+  return result;
 }
 
 // ── getPendingActions ─────────────────────────────────────────
@@ -335,6 +359,7 @@ function actionLogKept(caller, payload) {
   });
 
   updateRowCols(SHEET_DEVICES, device._rowIndex, { LastUpdated: ts });
+  _invalidateCache(); // devices list changed
   return { transactionId: txnId };
 }
 
@@ -384,7 +409,7 @@ function actionInitiateTransfer(caller, payload) {
     HasPendingTransferTo: toEmail,
     LastUpdated:          ts
   });
-
+  _invalidateCache(); // devices list changed
   return { transactionId: txnId };
 }
 
@@ -455,6 +480,7 @@ function actionRespondToTransfer(caller, payload) {
   // appears in getPendingActions (which filters on TransferStatus = "Pending")
   const resolvedStatus = decision === "confirm" ? "Confirmed" : "Declined";
   updateCell(SHEET_TRANSACTIONS, pending._rowIndex, "TransferStatus", resolvedStatus);
+  _invalidateCache(); // devices list (holder/pending) changed
 
   return { transactionId: newTxn, decision };
 }
@@ -496,6 +522,7 @@ function actionLogNewbieHandoff(caller, payload) {
     PhysicallyWithNote: physicalNote,
     LastUpdated:        ts
   });
+  _invalidateCache(); // devices list changed
 
   return { transactionId: txnId };
 }
@@ -536,6 +563,7 @@ function actionReportLostDamaged(caller, payload) {
     Status:      status,
     LastUpdated: ts
   });
+  _invalidateCache(); // devices list changed
 
   return { transactionId: txnId };
 }
@@ -588,6 +616,7 @@ function actionAddDevice(caller, payload) {
     TransferStatus:       "N/A",
     LinkedTransactionID:  ""
   });
+  _invalidateCache(); // new device added
 
   return { transactionId: txnId, deviceLabel };
 }
@@ -623,6 +652,7 @@ function actionApproveMember(caller, payload) {
     });
   }
 
+  _invalidateCache(); // member list changed
   return { email, action: existing ? "reactivated" : "added" };
 }
 
@@ -636,6 +666,7 @@ function actionRemoveMember(caller, payload) {
   if (!member) throw new Error("Member not found: " + email);
 
   updateRowCols(SHEET_MEMBERS, member._rowIndex, { Active: "N" });
+  _invalidateCache(); // member list changed
   return { email, action: "deactivated" };
 }
 

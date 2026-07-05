@@ -18,12 +18,19 @@ const HomeView = (() => {
   async function render(forceRefresh = false) {
     const el = document.getElementById('home-content');
 
+    // Stale-while-revalidate: show cached data instantly, refresh silently in bg
     if (_cacheValid() && !forceRefresh) {
       el.innerHTML = buildContent(_devices);
+      _fetchAndUpdate(el, false); // silent background refresh
       return;
     }
 
-    el.innerHTML = skeletonCards(6);
+    // First load or forced refresh — show skeleton then data
+    if (!_devices.length) el.innerHTML = skeletonCards(6);
+    await _fetchAndUpdate(el, true);
+  }
+
+  async function _fetchAndUpdate(el, showError) {
     try {
       [_devices, _members] = await Promise.all([API.listDevices(), API.listMembers()]);
       _fetchedAt = Date.now();
@@ -32,7 +39,8 @@ const HomeView = (() => {
         document.getElementById('admin-panel')?.classList.remove('hidden');
       }
     } catch (err) {
-      el.innerHTML = errorState(err.message);
+      if (showError) el.innerHTML = errorState(err.message);
+      // If we already have cached data showing, don't replace it with an error
     }
   }
 
@@ -115,15 +123,8 @@ const HomeView = (() => {
     const isHolder = device.currentHolderEmail?.toLowerCase() === user?.email?.toLowerCase();
     const isAdmin  = user?.role === 'Admin';
 
-    const info = `<div class="device-menu-info">
-      <div class="device-menu-row"><span class="text-muted">Type</span><span>${esc(d.deviceType)} - ${esc(device.capacity)}</span></div>
-      <div class="device-menu-row"><span class="text-muted">Status</span>${buildStatusBadge(device)}</div>
-      <div class="device-menu-row"><span class="text-muted">Holder</span><span>${esc(device.currentHolderName)}</span></div>
-      ${device.physicallyWithNote ? `<div class="device-menu-row"><span class="text-muted">Note</span><span class="text-muted" style="font-size:.85rem">${esc(device.physicallyWithNote)}</span></div>` : ''}
-    </div>`;
-
-    // Fix typo: use device not d
-    const infoFixed = `<div class="device-menu-info">
+    // Build device info rows — all references use `device`, no stale `d`
+    const infoHtml = `<div class="device-menu-info">
       <div class="device-menu-row"><span class="text-muted">Type</span><span>${esc(device.deviceType)} - ${esc(device.capacity)}</span></div>
       <div class="device-menu-row"><span class="text-muted">Status</span>${buildStatusBadge(device)}</div>
       <div class="device-menu-row"><span class="text-muted">Holder</span><span>${esc(device.currentHolderName)}</span></div>
@@ -143,7 +144,7 @@ const HomeView = (() => {
 
     Modal.open({
       title: label,
-      body:  infoFixed + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${actions.join('')}</div>`,
+      body:  infoHtml + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${actions.join('')}</div>`,
       footer: ''
     });
   }
