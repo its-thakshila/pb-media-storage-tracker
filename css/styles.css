@@ -149,8 +149,48 @@ a { color: inherit; text-decoration: none; }
   font-weight: 500;
   cursor: pointer;
   transition: border-color var(--transition);
+  user-select: none;
 }
 .user-chip:hover { border-color: var(--text-secondary); }
+
+/* ── User dropdown ───────────────────────────────────────── */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 200;
+  animation: fadeUp 0.15s ease;
+  overflow: hidden;
+}
+.user-dropdown-info {
+  padding: 14px 16px;
+}
+.user-dropdown-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0;
+}
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition);
+  text-align: left;
+}
+.user-dropdown-item:hover { background: rgba(255,255,255,0.05); }
 .user-avatar {
   width: 26px; height: 26px;
   border-radius: 50%;
@@ -587,7 +627,55 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Misc helpers ───────────────────────────────────────────── */
+/* ── Device cards (mobile) ───────────────────────────────── */
+.device-card-list { display: flex; flex-direction: column; gap: 8px; }
+.device-card-row {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+.device-card-row:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.02); }
+.device-card-row.status-lost,
+.device-card-row.status-damaged { opacity: 0.65; }
+.device-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+.device-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.device-card-note { margin-top: 6px; }
+
+/* ── Device menu info rows ───────────────────────────────── */
+.device-menu-info { margin-bottom: 4px; }
+.device-menu-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: .875rem;
+  gap: 12px;
+}
+.device-menu-row:last-child { border-bottom: none; }
+.device-menu-row .text-muted { font-size: .8rem; flex-shrink: 0; }
+
+/* ── Table wrap (horizontal scroll on mobile) ───────────── */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Icon sizing ─────────────────────────────────────────── */
+.icon { vertical-align: middle; flex-shrink: 0; }
+
+/* ── Misc helpers ───────────────────────────────────────── */
 .text-muted   { color: var(--text-secondary); }
 .text-red     { color: var(--brand-red); }
 .text-green   { color: var(--status-confirmed); }

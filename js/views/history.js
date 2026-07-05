@@ -1,5 +1,5 @@
 // ============================================================
-//  views/history.js — Device history timeline
+//  views/history.js - Device history timeline
 // ============================================================
 
 const HistoryView = (() => {
@@ -24,11 +24,12 @@ const HistoryView = (() => {
         <div class="timeline-dot ${dotClass}"></div>
         <div class="timeline-time">${formatTimestamp(t.timestamp)}</div>
         <div class="timeline-desc">
-          <span class="badge ${badgeClass}" style="margin-bottom:4px">${desc}</span>
+          <span class="badge ${badgeClass}">${desc}</span>
         </div>
-        ${t.notes ? `<div class="timeline-note">${esc(t.notes)}</div>` : ''}
-        ${t.cameraModel ? `<div class="timeline-note">📷 ${esc(t.cameraModel)}</div>` : ''}
-        ${t.newbieName  ? `<div class="timeline-note">👤 ${esc(t.newbieName)}</div>` : ''}
+        ${t.notes        ? `<div class="timeline-note">${esc(t.notes)}</div>` : ''}
+        ${t.cameraModel  ? `<div class="timeline-note">${Icons.camera()} ${esc(t.cameraModel)}</div>` : ''}
+        ${t.newbieName   ? `<div class="timeline-note">${Icons.user()} ${esc(t.newbieName)}</div>` : ''}
+        ${t.linkedTransactionId ? `<div class="timeline-note" style="font-size:.75rem;color:var(--text-secondary)">Ref: ${esc(t.linkedTransactionId)}</div>` : ''}
       </li>`;
     }).join('');
     return `<ul class="timeline">${rows}</ul>`;
@@ -37,29 +38,37 @@ const HistoryView = (() => {
   function formatEntry(t) {
     switch (t.actionType) {
       case 'Kept':
-        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',   desc: `${esc(t.actorName)} kept the device` };
+        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
+                 desc: `${Icons.pin()} ${esc(t.actorName)} kept the device` };
       case 'TransferInitiated':
-        return { dotClass: 'dot-pending',   badgeClass: 'badge-pending',   desc: `${esc(t.actorName)} → ${esc(t.counterpartyName)} (pending)` };
+        return { dotClass: 'dot-pending',   badgeClass: 'badge-pending',
+                 desc: `${Icons.arrowRight()} ${esc(t.actorName)} - ${esc(t.counterpartyName)} (pending)` };
       case 'TransferConfirmed':
-        return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed', desc: `Transfer confirmed: ${esc(t.counterpartyName)} → ${esc(t.actorName)}` };
+        return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
+                 desc: `${Icons.check()} Transfer confirmed: ${esc(t.counterpartyName)} - ${esc(t.actorName)}` };
       case 'TransferDeclined':
-        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',   desc: `${esc(t.actorName)} declined transfer from ${esc(t.counterpartyName)}` };
+        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
+                 desc: `${Icons.x()} ${esc(t.actorName)} declined transfer from ${esc(t.counterpartyName)}` };
       case 'NewbieHandoff':
-        return { dotClass: 'dot-newbie',    badgeClass: 'badge-newbie',    desc: `${esc(t.actorName)} gave physical possession to a newbie` };
+        return { dotClass: 'dot-newbie',    badgeClass: 'badge-newbie',
+                 desc: `${Icons.user()} ${esc(t.actorName)} gave physical possession to a newbie` };
       case 'LostDamagedReported':
-        return { dotClass: 'dot-lost',      badgeClass: 'badge-lost',      desc: `⚠ Reported ${esc(t.notes?.includes('Damaged') ? 'Damaged' : 'Lost')} by ${esc(t.actorName)}` };
+        return { dotClass: 'dot-lost',      badgeClass: 'badge-lost',
+                 desc: `${Icons.alert()} Reported by ${esc(t.actorName)}` };
       case 'DeviceAdded':
-        return { dotClass: 'dot-added',     badgeClass: 'badge-neutral',   desc: `Device added to system by ${esc(t.actorName)}` };
+        return { dotClass: 'dot-added',     badgeClass: 'badge-neutral',
+                 desc: `${Icons.package()} Device added by ${esc(t.actorName)}` };
       case 'AdminCorrection':
-        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',   desc: `Admin correction by ${esc(t.actorName)}` };
+        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
+                 desc: `${Icons.settings()} Admin correction by ${esc(t.actorName)}` };
       default:
-        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',   desc: esc(t.actionType) };
+        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral', desc: esc(t.actionType) };
     }
   }
 
   function emptyState() {
     return `<div class="empty-state">
-      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-icon">${Icons.clock()}</div>
       <p class="empty-state-text">No history yet for this device.</p>
     </div>`;
   }

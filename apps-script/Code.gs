@@ -451,6 +451,11 @@ function actionRespondToTransfer(caller, payload) {
     });
   }
 
+  // ── CRITICAL: update the original row's TransferStatus so it no longer
+  // appears in getPendingActions (which filters on TransferStatus = "Pending")
+  const resolvedStatus = decision === "confirm" ? "Confirmed" : "Declined";
+  updateCell(SHEET_TRANSACTIONS, pending._rowIndex, "TransferStatus", resolvedStatus);
+
   return { transactionId: newTxn, decision };
 }
 

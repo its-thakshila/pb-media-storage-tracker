@@ -6,6 +6,8 @@
   <title>Perabeats Media Tracker</title>
   <meta name="description" content="Real-time SD card and hard disk custody tracker for Perabeats Media Society, University of Peradeniya." />
   <link rel="icon" href="assets/logo.png" type="image/png" />
+  <!-- Preconnect for Google Fonts performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="css/styles.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -47,21 +49,34 @@
         <span class="nav-logo-text">pera<span>beats</span></span>
       </div>
       <div class="nav-tabs">
-        <button class="nav-tab active" id="tab-home"    onclick="Router.show('home')" aria-label="Home">
-          🏠 <span class="tab-label">Home</span>
+        <button class="nav-tab active" id="tab-home" onclick="Router.show('home')" aria-label="Home">
+          <span id="icon-home"></span><span class="tab-label">Home</span>
         </button>
         <button class="nav-tab" id="tab-pending" onclick="Router.show('pending')" aria-label="Pending Actions">
-          🔔 <span class="tab-label">Pending</span>
+          <span id="icon-bell"></span><span class="tab-label">Pending</span>
           <span class="nav-badge" id="pending-badge" style="display:none">0</span>
         </button>
         <button class="nav-tab" id="tab-history" onclick="Router.show('history')" aria-label="History" style="display:none">
-          📋 <span class="tab-label">History</span>
+          <span id="icon-clock"></span><span class="tab-label">History</span>
         </button>
       </div>
-      <div class="nav-right">
-        <div class="user-chip" id="user-chip" onclick="Auth.signOut(Router.showLogin)">
+      <div class="nav-right" style="position:relative">
+        <div class="user-chip" id="user-chip" onclick="UI.toggleUserMenu()" aria-haspopup="true">
           <div class="user-avatar" id="user-avatar">?</div>
           <span id="user-name-display">…</span>
+          <span id="icon-chevdown"></span>
+        </div>
+        <!-- User dropdown menu -->
+        <div class="user-dropdown" id="user-dropdown" style="display:none">
+          <div class="user-dropdown-info">
+            <div id="dropdown-name" style="font-weight:600;font-size:.9rem">…</div>
+            <div id="dropdown-email" class="text-muted" style="font-size:.78rem">…</div>
+            <div id="dropdown-role" class="text-muted" style="font-size:.78rem"></div>
+          </div>
+          <div class="user-dropdown-divider"></div>
+          <button class="user-dropdown-item" onclick="UI.signOutConfirm()">
+            <span id="icon-logout"></span> Sign Out
+          </button>
         </div>
       </div>
     </div>
@@ -85,7 +100,7 @@
       <!-- Pending Actions inline panel (shown on home if any) -->
       <div id="pending-home-panel" class="card" style="display:none;margin-bottom:20px;border-left:3px solid var(--status-pending)">
         <div class="section-header">
-          <h2 class="section-title">🔔 Pending Actions</h2>
+          <h2 class="section-title">Pending Actions</h2>
           <button class="btn btn-secondary btn-sm" onclick="Router.show('pending')">View All</button>
         </div>
         <div id="pending-home-content"></div>
@@ -96,7 +111,7 @@
         <div class="section-header">
           <h2 class="section-title">All Devices</h2>
           <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn btn-secondary btn-sm" onclick="HomeView.render()" title="Refresh">↻</button>
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="HomeView.render(true)" title="Refresh"><span id="icon-refresh"></span></button>
             <button class="btn btn-primary btn-sm admin-only" onclick="HomeView.openAddDevice()">+ Add Device</button>
           </div>
         </div>
@@ -106,9 +121,9 @@
       <!-- Admin: Manage Members -->
       <div class="card admin-only hidden" id="admin-panel" style="margin-top:16px">
         <div class="section-header">
-          <h2 class="section-title">⚙ Admin Controls</h2>
+          <h2 class="section-title">Admin Controls</h2>
         </div>
-        <button class="btn btn-secondary" onclick="HomeView.openManageMembers()">👥 Manage Members</button>
+        <button class="btn btn-secondary" id="btn-manage-members" onclick="HomeView.openManageMembers()">Manage Members</button>
       </div>
 
     </div>
@@ -119,8 +134,8 @@
     <div class="container view-body">
       <div class="card">
         <div class="section-header">
-          <h2 class="section-title">🔔 Pending Actions</h2>
-          <button class="btn btn-secondary btn-sm" onclick="PendingView.render()" title="Refresh">↻</button>
+          <h2 class="section-title">Pending Actions</h2>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="PendingView.render()" title="Refresh"><span id="icon-refresh2"></span></button>
         </div>
         <div id="pending-content"></div>
       </div>
@@ -131,7 +146,7 @@
   <div class="view" id="view-history">
     <div class="container view-body">
       <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px">
-        <button class="btn btn-secondary btn-sm" onclick="Router.show('home')">← Back</button>
+        <button class="btn btn-secondary btn-sm" onclick="Router.show('home')">Back</button>
         <h1 class="section-title" id="history-device-label">Device History</h1>
       </div>
       <div class="card">
@@ -140,7 +155,7 @@
 
       <!-- Admin: Correct Log Entry -->
       <div class="admin-only" style="margin-top:16px">
-        <button class="btn btn-secondary btn-sm" onclick="AdminView.openCorrectLog()">🔧 Add Admin Correction</button>
+        <button class="btn btn-secondary btn-sm" onclick="AdminView.openCorrectLog()">Add Admin Correction</button>
       </div>
     </div>
   </div>
@@ -149,6 +164,7 @@
 
 <!-- ── Scripts ───────────────────────────────────────────── -->
 <script src="js/config.js"></script>
+<script src="js/icons.js"></script>
 <script>
 // ── Utility helpers ───────────────────────────────────────
 function esc(str) {
@@ -162,10 +178,35 @@ function esc(str) {
 }
 
 function firstName(fullName) {
-  if (!fullName) return '—';
+  if (!fullName) return '-';
   const parts = fullName.trim().split(' ');
   return parts[0] + (parts.length > 1 ? ' ' + parts[parts.length-1][0] + '.' : '');
 }
+
+// ── UI helpers (dropdown, sign-out) ──────────────────────
+const UI = {
+  _menuOpen: false,
+  toggleUserMenu() {
+    const dd = document.getElementById('user-dropdown');
+    this._menuOpen = !this._menuOpen;
+    dd.style.display = this._menuOpen ? '' : 'none';
+  },
+  closeUserMenu() {
+    this._menuOpen = false;
+    const dd = document.getElementById('user-dropdown');
+    if (dd) dd.style.display = 'none';
+  },
+  signOutConfirm() {
+    this.closeUserMenu();
+    Auth.signOut(Router.showLogin);
+  }
+};
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#user-chip') && !e.target.closest('#user-dropdown')) {
+    UI.closeUserMenu();
+  }
+});
 
 function timeAgo(isoStr) {
   if (!isoStr) return '—';
@@ -294,12 +335,30 @@ const AdminView = {
 
 // ── App Bootstrap ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Inject nav icons after DOM ready
+  const iconMap = {
+    'icon-home':     Icons.home(),
+    'icon-bell':     Icons.bell(),
+    'icon-clock':    Icons.clock(),
+    'icon-chevdown': Icons.chevDown(),
+    'icon-refresh':  Icons.refresh(),
+    'icon-refresh2': Icons.refresh(),
+    'icon-logout':   Icons.logout(),
+  };
+  Object.entries(iconMap).forEach(([id, svg]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = svg;
+  });
+
+  // Admin controls icon
+  const mmBtn = document.getElementById('btn-manage-members');
+  if (mmBtn) mmBtn.innerHTML = Icons.users() + ' Manage Members';
+
   // Check for existing session
   if (Auth.isLoggedIn()) {
     const user = Auth.getUser();
     _onLoginSuccess(user);
   } else {
-    // Init Google Sign-In
     Auth.initSignIn(
       (user) => _onLoginSuccess(user),
       (errMsg) => {
@@ -312,16 +371,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function _onLoginSuccess(user) {
-  // Update UI
   document.getElementById('app-nav').style.display = '';
   document.getElementById('user-name-display').textContent = user.name.split(' ')[0];
   document.getElementById('user-avatar').textContent = user.name.charAt(0).toUpperCase();
+  // Populate dropdown
+  document.getElementById('dropdown-name').textContent  = user.name;
+  document.getElementById('dropdown-email').textContent = user.email;
+  document.getElementById('dropdown-role').textContent  = user.role + (user.title ? ' - ' + user.title : '');
   if (user.role === 'Admin') document.body.classList.add('is-admin');
-
-  // Navigate to home (loads pending check inline)
   Router.show('home');
-
-  // Also eagerly load pending count for badge
   PendingView.render();
 }
 </script>

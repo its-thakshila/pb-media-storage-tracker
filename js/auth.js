@@ -1,5 +1,7 @@
 // ============================================================
-//  auth.js — Google Sign-In (Google Identity Services) wrapper
+//  auth.js - Google Sign-In (Google Identity Services) wrapper
+//  Bug fix: poll for window.google on slow/mobile connections
+//  instead of failing immediately if the async script hasn't loaded yet.
 // ============================================================
 
 const Auth = (() => {
@@ -9,9 +11,9 @@ const Auth = (() => {
 
   let _googleInitialized = false;
 
-  function getToken()       { return sessionStorage.getItem(SESSION_KEY_TOKEN); }
-  function getUser()        { const u = sessionStorage.getItem(SESSION_KEY_USER); return u ? JSON.parse(u) : null; }
-  function isLoggedIn()     { return !!getToken() && !!getUser(); }
+  function getToken()   { return sessionStorage.getItem(SESSION_KEY_TOKEN); }
+  function getUser()    { const u = sessionStorage.getItem(SESSION_KEY_USER); return u ? JSON.parse(u) : null; }
+  function isLoggedIn() { return !!getToken() && !!getUser(); }
 
   function saveSession(token, user) {
     sessionStorage.setItem(SESSION_KEY_TOKEN, token);
@@ -22,43 +24,62 @@ const Auth = (() => {
     sessionStorage.removeItem(SESSION_KEY_TOKEN);
     sessionStorage.removeItem(SESSION_KEY_USER);
     if (window.google && _googleInitialized) {
-      google.accounts.id.disableAutoSelect();
+      try { google.accounts.id.disableAutoSelect(); } catch(_) {}
     }
   }
 
   /**
-   * Initialize Google Identity Services and render the Sign-In button
-   * into the element with id="g-signin-btn".
-   * @param {Function} onSuccess - called with user object { email, name, role } after authCheck
-   * @param {Function} onError   - called with a human-readable error string
+   * Initialises Google Identity Services and renders the Sign-In button.
+   * Polls up to 10 seconds for window.google to appear (handles slow mobile networks
+   * where the async script loads after DOMContentLoaded).
    */
   function initSignIn(onSuccess, onError) {
-    if (!window.google) {
-      onError("Google Sign-In library failed to load. Check your internet connection.");
+    if (window.google) {
+      _doInit(onSuccess, onError);
       return;
     }
 
-    google.accounts.id.initialize({
-      client_id:         CONFIG.OAUTH_CLIENT_ID,
-      callback:          (response) => _handleCredential(response, onSuccess, onError),
-      auto_select:       false,
-      cancel_on_tap_outside: true,
-    });
-
-    google.accounts.id.renderButton(
-      document.getElementById("g-signin-btn"),
-      {
-        theme:     "filled_black",
-        size:      "large",
-        text:      "signin_with",
-        width:     280,
-        logo_alignment: "left",
+    // GSI script hasn't loaded yet - poll every 300ms, give up after 10s
+    let attempts = 0;
+    const maxAttempts = 34; // ~10s
+    const interval = setInterval(() => {
+      attempts++;
+      if (window.google) {
+        clearInterval(interval);
+        _doInit(onSuccess, onError);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        onError("Google Sign-In failed to load. Please check your internet connection and refresh the page.");
       }
-    );
+    }, 300);
+  }
 
-    // Also attempt One-Tap if user was previously signed in
-    google.accounts.id.prompt();
-    _googleInitialized = true;
+  function _doInit(onSuccess, onError) {
+    try {
+      google.accounts.id.initialize({
+        client_id:              CONFIG.OAUTH_CLIENT_ID,
+        callback:               (response) => _handleCredential(response, onSuccess, onError),
+        auto_select:            false,
+        cancel_on_tap_outside:  true,
+      });
+
+      const btnEl = document.getElementById("g-signin-btn");
+      if (btnEl) {
+        google.accounts.id.renderButton(btnEl, {
+          theme:          "filled_black",
+          size:           "large",
+          text:           "signin_with",
+          width:          280,
+          logo_alignment: "left",
+        });
+      }
+
+      // One-tap for returning users
+      google.accounts.id.prompt();
+      _googleInitialized = true;
+    } catch (err) {
+      onError("Google Sign-In initialization failed: " + err.message);
+    }
   }
 
   async function _handleCredential(response, onSuccess, onError) {
@@ -68,7 +89,7 @@ const Auth = (() => {
       return;
     }
 
-    // Temporarily store the token so API.authCheck can send it
+    // Temporarily stash token so API.authCheck can send it
     sessionStorage.setItem(SESSION_KEY_TOKEN, token);
 
     try {
