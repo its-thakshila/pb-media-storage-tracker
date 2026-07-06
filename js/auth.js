@@ -118,6 +118,7 @@ const Auth = (() => {
 
   function signOut(onComplete) {
     clearSession();
+    _setLoginLoading(false); // reset spinner so sign-in button shows on login screen
     if (onComplete) onComplete();
   }
 
