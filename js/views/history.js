@@ -40,20 +40,21 @@ const HistoryView = (() => {
   }
 
   function formatEntry(t) {
-    // Helper: is this person the Resource Coordinator (Admin)?
-    const isRC = (role) => role === 'Admin';
+    // RC = member whose Title is "Resource Coordinator" (not the Admin role)
+    const RC_TITLE = 'Resource Coordinator';
+    const isRC = (title) => title === RC_TITLE;
 
     switch (t.actionType) {
       case 'Kept':
         return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
                  desc: `${Icons.pin()} ${esc(t.actorName)} kept the device` };
       case 'TransferInitiated':
-        // Always blue — it's a member-to-member transfer in progress
+        // Always blue — transfer in flight between members
         return { dotClass: 'dot-transfer',  badgeClass: 'badge-transfer',
                  desc: `${Icons.arrowRight()} ${esc(t.actorName)} to ${esc(t.counterpartyName)} (pending)` };
       case 'TransferConfirmed':
-        // Green if the recipient (actor) is the RC; blue for all other confirmed transfers
-        if (isRC(t.actorRole)) {
+        // Green only when device reaches the Resource Coordinator; blue otherwise
+        if (isRC(t.actorTitle)) {
           return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
                    desc: `${Icons.check()} Returned to RC: ${esc(t.counterpartyName)} → ${esc(t.actorName)}` };
         }
@@ -63,10 +64,15 @@ const HistoryView = (() => {
         return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
                  desc: `${Icons.x()} ${esc(t.actorName)} declined transfer from ${esc(t.counterpartyName)}` };
       case 'NewbieHandoff':
+        // Always purple — physical possession moved to a non-member
         return { dotClass: 'dot-newbie',    badgeClass: 'badge-newbie',
                  desc: `${Icons.user()} ${esc(t.actorName)} gave physical possession to a newbie` };
       case 'NewbieReturned':
-        // Blue — device back with holder (not RC, not newbie)
+        // Green if the device is back with the RC; blue if back with a regular member
+        if (isRC(t.actorTitle)) {
+          return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
+                   desc: `${Icons.check()} Newbie returned device to RC (${esc(t.actorName)})` };
+        }
         return { dotClass: 'dot-transfer',  badgeClass: 'badge-transfer',
                  desc: `${Icons.check()} Newbie returned device to ${esc(t.actorName)}` };
       case 'LostDamagedReported':

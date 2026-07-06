@@ -197,6 +197,11 @@ function resolveRole(email, membersMap) {
   return membersMap[key] ? membersMap[key].Role : "";
 }
 
+function resolveTitle(email, membersMap) {
+  const key = String(email).toLowerCase();
+  return membersMap[key] ? (membersMap[key].Title || "") : "";
+}
+
 // ── Device helpers ───────────────────────────────────────────
 
 function getDeviceByLabel(label) {
@@ -288,11 +293,11 @@ function actionGetDeviceHistory(caller, payload) {
     actionType:         t.ActionType,
     actorEmail:         t.ActorEmail,
     actorName:          resolveName(t.ActorEmail, membersMap),
-    actorRole:          resolveRole(t.ActorEmail, membersMap),
+    actorTitle:         resolveTitle(t.ActorEmail, membersMap),
     cameraModel:        t.CameraModel || "",
     counterpartyEmail:  t.CounterpartyEmail || "",
     counterpartyName:   t.CounterpartyEmail ? resolveName(t.CounterpartyEmail, membersMap) : "",
-    counterpartyRole:   t.CounterpartyEmail ? resolveRole(t.CounterpartyEmail, membersMap) : "",
+    counterpartyTitle:  t.CounterpartyEmail ? resolveTitle(t.CounterpartyEmail, membersMap) : "",
     newbieName:         t.NewbieName || "",
     notes:              t.Notes || "",
     transferStatus:     t.TransferStatus || "",
