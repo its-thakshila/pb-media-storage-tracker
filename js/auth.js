@@ -89,6 +89,9 @@ const Auth = (() => {
       return;
     }
 
+    // Show spinner, hide sign-in button while authCheck is in flight
+    _setLoginLoading(true);
+
     // Temporarily stash token so API.authCheck can send it
     localStorage.setItem(SESSION_KEY_TOKEN, token);
 
@@ -96,10 +99,21 @@ const Auth = (() => {
       const user = await API.authCheck();
       saveSession(token, user);
       onSuccess(user);
+      // Leave loading visible — the view will switch immediately after
     } catch (err) {
       clearSession();
+      _setLoginLoading(false); // restore button so user can retry
       onError(err.message);
     }
+  }
+
+  function _setLoginLoading(on) {
+    const btn     = document.getElementById('g-signin-btn');
+    const loading = document.getElementById('login-loading');
+    const errEl   = document.getElementById('login-error');
+    if (btn)     btn.style.display     = on ? 'none'  : '';
+    if (loading) loading.classList.toggle('visible', on);
+    if (errEl && on) { errEl.textContent = ''; errEl.classList.remove('visible'); }
   }
 
   function signOut(onComplete) {

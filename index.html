@@ -46,7 +46,7 @@
     <div class="container nav-inner">
       <div class="nav-logo">
         <img src="assets/logo.png" alt="Perabeats" class="nav-logo-img" />
-        <span class="nav-logo-text">pera<span>beats</span></span>
+        <!-- nav-logo-text removed: logo is now a wordmark -->
       </div>
       <div class="nav-tabs">
         <button class="nav-tab active" id="tab-home" onclick="Router.show('home')" aria-label="Home">
@@ -89,6 +89,11 @@
       <h1 class="login-title">Media Tracker</h1>
       <p class="login-subtitle">Perabeats Media Society · University of Peradeniya</p>
       <div id="g-signin-btn"></div>
+      <!-- Shown while authCheck is in flight after account selection -->
+      <div id="login-loading">
+        <div class="spinner"></div>
+        <span>Signing in…</span>
+      </div>
       <div class="login-error" id="login-error"></div>
     </div>
   </div>
