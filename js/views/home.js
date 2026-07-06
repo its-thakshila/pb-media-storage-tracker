@@ -10,10 +10,20 @@ const HomeView = (() => {
   let _devices    = [];
   let _members    = [];
   let _fetchedAt  = 0;
-  const CACHE_TTL = 30000; // 30 seconds
+  let _pollTimer  = null;
+  const CACHE_TTL = 15000; // match the poll interval
 
   function _cacheValid() { return _devices.length > 0 && (Date.now() - _fetchedAt) < CACHE_TTL; }
   function invalidateCache() { _fetchedAt = 0; }
+
+  // ── Polling ──────────────────────────────────────────────────
+  function _startPolling() {
+    if (_pollTimer) return; // already running
+    _pollTimer = setInterval(() => {
+      const el = document.getElementById('home-content');
+      if (el) _fetchAndUpdate(el, false); // silent: no skeleton, no error overwrite
+    }, 15000);
+  }
 
   async function render(forceRefresh = false) {
     const el = document.getElementById('home-content');
@@ -38,6 +48,7 @@ const HomeView = (() => {
       if (Auth.getUser()?.role === 'Admin') {
         document.getElementById('admin-panel')?.classList.remove('hidden');
       }
+      _startPolling(); // ensure polling is running after every successful fetch
     } catch (err) {
       if (showError) el.innerHTML = errorState(err.message);
       // If we already have cached data showing, don't replace it with an error

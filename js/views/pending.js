@@ -32,7 +32,7 @@ const PendingView = (() => {
   // ── Background poll (silent, no skeleton) ───────────────────
   function _startPolling() {
     _stopPolling();
-    _pollTimer = setInterval(_backgroundFetch, 30000);
+    _pollTimer = setInterval(_backgroundFetch, 15000);
     // Also tick the "last updated" display every 5 seconds
     _startTick();
   }
