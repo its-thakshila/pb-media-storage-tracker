@@ -834,6 +834,16 @@ textarea.form-control {
   flex-wrap: wrap;
 }
 
+/* TXN ID shown below every timeline entry for admin reference */
+.timeline-txn {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  opacity: 0.45;
+  margin-top: 5px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.02em;
+}
+
 /* ── Pending Actions Card ───────────────────────────────────── */
 #pending-content {
   overflow-x: hidden;

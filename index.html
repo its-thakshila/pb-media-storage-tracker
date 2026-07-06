@@ -29,7 +29,7 @@
   <div class="modal" id="modal-box">
     <div class="modal-header">
       <h2 class="modal-title" id="modal-title"></h2>
-      <button class="modal-close" id="modal-close-btn" onclick="Modal.close()" aria-label="Close">✕</button>
+      <button class="modal-close" id="modal-close-btn" onclick="Modal.close()" aria-label="Close"><span id="icon-modal-close"></span></button>
     </div>
     <div id="modal-body"></div>
     <div id="modal-footer" class="modal-footer"></div>
@@ -225,7 +225,7 @@ document.addEventListener('touchend', (e) => {
 }, { passive: false });
 
 function timeAgo(isoStr) {
-  if (!isoStr) return '—';
+  if (!isoStr) return '-';
   const date = new Date(isoStr);
   const diff  = Date.now() - date.getTime();
   const mins  = Math.floor(diff / 60000);
@@ -240,7 +240,7 @@ function timeAgo(isoStr) {
 }
 
 function formatTimestamp(isoStr) {
-  if (!isoStr) return '—';
+  if (!isoStr) return '-';
   const d = new Date(isoStr);
   return d.toLocaleString('en-LK', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:true });
 }
@@ -315,10 +315,10 @@ const AdminView = {
   openCorrectLog() {
     const label = document.getElementById('history-device-label').textContent;
     Modal.open({
-      title: '🔧 Admin Correction',
+      title: `${Icons.settings()} Admin Correction`,
       body: `
         <p class="text-muted" style="font-size:.875rem;margin-bottom:16px">
-          Enter the Transaction ID to flag, and a correction note. The original row is never modified — a new row is appended.
+          Enter the Transaction ID to flag, and a correction note. The original row is never modified - a new row is appended.
         </p>
         <div class="form-group">
           <label class="form-label">Transaction ID to correct</label>
@@ -353,13 +353,14 @@ const AdminView = {
 document.addEventListener('DOMContentLoaded', () => {
   // Inject nav icons after DOM ready
   const iconMap = {
-    'icon-home':     Icons.home(),
-    'icon-bell':     Icons.bell(),
-    'icon-clock':    Icons.clock(),
-    'icon-chevdown': Icons.chevDown(),
-    'icon-refresh':  Icons.refresh(),
-    'icon-refresh2': Icons.refresh(),
-    'icon-logout':   Icons.logout(),
+    'icon-home':         Icons.home(),
+    'icon-bell':         Icons.bell(),
+    'icon-clock':        Icons.clock(),
+    'icon-chevdown':     Icons.chevDown(),
+    'icon-refresh':      Icons.refresh(),
+    'icon-refresh2':     Icons.refresh(),
+    'icon-logout':       Icons.logout(),
+    'icon-modal-close':  Icons.x(),
   };
   Object.entries(iconMap).forEach(([id, svg]) => {
     const el = document.getElementById(id);

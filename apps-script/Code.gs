@@ -731,16 +731,26 @@ function actionRemoveMember(caller, payload) {
 function actionCorrectLogEntry(caller, payload) {
   requireAdmin(caller);
   const { transactionId, correctionNote } = payload;
-  if (!transactionId)   throw new Error("transactionId is required.");
-  if (!correctionNote)  throw new Error("correctionNote is required.");
+  if (!transactionId)  throw new Error("transactionId is required.");
+  if (!correctionNote) throw new Error("correctionNote is required.");
 
-  const txnId = generateTxnId();
-  const ts    = nowIso();
+  // Find the original transaction to copy its DeviceLabel.
+  // Without a DeviceLabel the correction row is filtered out of
+  // getDeviceHistory and never appears on the timeline — this is the fix.
+  const txns     = getSheetData(SHEET_TRANSACTIONS);
+  const original = txns.find(function(t) {
+    return String(t.TransactionID).trim() === String(transactionId).trim();
+  });
+  if (!original) throw new Error("Original transaction not found: " + transactionId);
+
+  const deviceLabel = original.DeviceLabel || "";
+  const txnId       = generateTxnId();
+  const ts          = nowIso();
 
   appendRow(SHEET_TRANSACTIONS, {
     TransactionID:        txnId,
     Timestamp:            ts,
-    DeviceLabel:          "",
+    DeviceLabel:          deviceLabel,
     ActionType:           "AdminCorrection",
     ActorEmail:           caller.Email,
     CameraModel:          "",
@@ -751,5 +761,5 @@ function actionCorrectLogEntry(caller, payload) {
     LinkedTransactionID:  transactionId
   });
 
-  return { transactionId: txnId };
+  return { transactionId: txnId, deviceLabel };
 }

@@ -32,7 +32,8 @@ const HistoryView = (() => {
           ${t.notes        ? `<div class="timeline-note">${esc(t.notes)}</div>` : ''}
           ${t.cameraModel  ? `<div class="timeline-note">${Icons.camera()} ${esc(t.cameraModel)}</div>` : ''}
           ${t.newbieName   ? `<div class="timeline-note">${Icons.user()} ${esc(t.newbieName)}</div>` : ''}
-          ${t.linkedTransactionId ? `<div class="timeline-note" style="font-size:.75rem">Ref: ${esc(t.linkedTransactionId)}</div>` : ''}
+          ${t.linkedTransactionId ? `<div class="timeline-note" style="font-size:.72rem;opacity:.6">Corrects: ${esc(t.linkedTransactionId)}</div>` : ''}
+          <div class="timeline-txn">${esc(t.transactionId)}</div>
         </div>
       </li>`;
     }).join('');
