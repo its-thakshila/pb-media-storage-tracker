@@ -90,7 +90,7 @@ const Auth = (() => {
     }
 
     // Temporarily stash token so API.authCheck can send it
-    sessionStorage.setItem(SESSION_KEY_TOKEN, token);
+    localStorage.setItem(SESSION_KEY_TOKEN, token);
 
     try {
       const user = await API.authCheck();
