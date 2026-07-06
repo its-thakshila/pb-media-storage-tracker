@@ -17,6 +17,17 @@ const HistoryView = (() => {
     }
   }
 
+  // Returns the right label for the LinkedTransactionID reference
+  // depending on what kind of action this entry is.
+  function _linkedLabel(actionType) {
+    switch (actionType) {
+      case 'TransferConfirmed': return 'Confirms';
+      case 'TransferDeclined':  return 'Declines';
+      case 'NewbieReturned':    return 'Returns from';
+      default:                  return 'Ref';
+    }
+  }
+
   function buildTimeline(items) {
     const rows = items.map(t => {
       const { dotClass, desc, badgeClass } = formatEntry(t);
@@ -32,7 +43,7 @@ const HistoryView = (() => {
           ${t.notes        ? `<div class="timeline-note">${esc(t.notes)}</div>` : ''}
           ${t.cameraModel  ? `<div class="timeline-note">${Icons.camera()} ${esc(t.cameraModel)}</div>` : ''}
           ${t.newbieName   ? `<div class="timeline-note">${Icons.user()} ${esc(t.newbieName)}</div>` : ''}
-          ${t.linkedTransactionId ? `<div class="timeline-note" style="font-size:.72rem;opacity:.6">Corrects: ${esc(t.linkedTransactionId)}</div>` : ''}
+          ${t.linkedTransactionId ? `<div class="timeline-note" style="font-size:.72rem;opacity:.6">${_linkedLabel(t.actionType)}: ${esc(t.linkedTransactionId)}</div>` : ''}
           <div class="timeline-txn">${esc(t.transactionId)}</div>
         </div>
       </li>`;
