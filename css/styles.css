@@ -529,6 +529,17 @@ a {
   border-color: var(--text-secondary);
 }
 
+.btn-danger {
+  background: #b91c1c;
+  color: #fff;
+  border: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #991b1b;
+  transform: translateY(-1px);
+}
+
 .btn-sm {
   padding: 6px 14px;
   font-size: 0.8125rem;

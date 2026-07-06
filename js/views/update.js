@@ -199,20 +199,28 @@ const UpdateView = (() => {
   }
 
   async function submitLostDamaged(deviceLabel) {
+    // Read values from DOM FIRST — confirm() replaces the modal content
     const status = document.getElementById('ld-status').value;
     const notes  = document.getElementById('ld-notes').value.trim();
-    try {
-      Saving.show();
-      HomeView.invalidateCache();
-      await API.reportLostDamaged({ deviceLabel, status, notes });
-      Toast.show(`Device reported as ${status}.`, 'error');
-      Modal.close();
-      HomeView.render(true);
-    } catch (err) {
-      Toast.show(err.message, 'error');
-    } finally {
-      Saving.hide();
-    }
+    Modal.confirm({
+      title:        `${Icons.flag()} Report ${status}?`,
+      message:      `Mark <strong>${esc(deviceLabel)}</strong> as <strong>${status}</strong>? This permanently changes the device status and cannot be undone from the app.`,
+      confirmLabel: `${Icons.flag()} Yes, Report as ${status}`,
+      confirmClass: 'btn-danger',
+      onConfirm: async () => {
+        try {
+          Saving.show();
+          HomeView.invalidateCache();
+          await API.reportLostDamaged({ deviceLabel, status, notes });
+          Toast.show(`Device reported as ${status}.`, 'error');
+          HomeView.render(true);
+        } catch (err) {
+          Toast.show(err.message, 'error');
+        } finally {
+          Saving.hide();
+        }
+      }
+    });
   }
 
   return { openKept, submitKept, openHandOver, submitHandOver, openNewbie, submitNewbie, openReturnFromNewbie, submitReturnFromNewbie, openLostDamaged, submitLostDamaged };

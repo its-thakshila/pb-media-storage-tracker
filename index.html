@@ -208,7 +208,13 @@ const UI = {
   },
   signOutConfirm() {
     this.closeUserMenu();
-    Auth.signOut(Router.showLogin);
+    Modal.confirm({
+      title:        `${Icons.logout()} Sign Out`,
+      message:      'Are you sure you want to sign out?',
+      confirmLabel: 'Sign Out',
+      confirmClass: 'btn-danger',
+      onConfirm:    () => Auth.signOut(Router.showLogin)
+    });
   }
 };
 // Close dropdown when clicking outside
@@ -276,7 +282,25 @@ const Modal = {
     document.getElementById('modal-overlay').classList.add('open');
   },
   close() {
+    this._confirmCb = null;
     document.getElementById('modal-overlay').classList.remove('open');
+  },
+  // In-app confirmation dialog — read any DOM values BEFORE calling this.
+  _confirmCb: null,
+  confirm({ title = `${Icons.alert()} Are you sure?`, message, onConfirm,
+            confirmLabel = 'Confirm', confirmClass = 'btn-primary' }) {
+    this._confirmCb = onConfirm;
+    this.open({
+      title,
+      body:   `<p style="margin:0;font-size:.9375rem;line-height:1.6">${message}</p>`,
+      footer: `<button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+               <button class="btn ${confirmClass}" onclick="Modal._exec()">${confirmLabel}</button>`
+    });
+  },
+  _exec() {
+    const cb = this._confirmCb;
+    this.close();
+    if (cb) cb();
   }
 };
 document.getElementById('modal-overlay').addEventListener('click', (e) => {
@@ -352,17 +376,25 @@ const AdminView = {
     const newHolderEmail = document.getElementById('ao-holder').value.trim();
     const reason         = document.getElementById('ao-reason').value.trim();
     if (!newHolderEmail || !reason) { Toast.show('Fill in all fields.', 'error'); return; }
-    try {
-      Saving.show();
-      await API.adminOverrideTransfer({ deviceLabel, newHolderEmail, reason });
-      Toast.show('Override applied. Device reassigned.', 'success');
-      Modal.close();
-      HomeView.refresh();
-    } catch (err) {
-      Toast.show(err.message, 'error');
-    } finally {
-      Saving.hide();
-    }
+    // Read values from DOM BEFORE showing confirm (confirm replaces modal content)
+    Modal.confirm({
+      title:        `${Icons.alert()} Apply Override?`,
+      message:      `Force-reassign <strong>${esc(deviceLabel)}</strong> to the selected member? This bypasses normal transfer flow and takes immediate effect.`,
+      confirmLabel: `${Icons.check()} Yes, Apply Override`,
+      confirmClass: 'btn-danger',
+      onConfirm: async () => {
+        try {
+          Saving.show();
+          await API.adminOverrideTransfer({ deviceLabel, newHolderEmail, reason });
+          Toast.show('Override applied. Device reassigned.', 'success');
+          HomeView.refresh();
+        } catch (err) {
+          Toast.show(err.message, 'error');
+        } finally {
+          Saving.hide();
+        }
+      }
+    });
   }
 };
 

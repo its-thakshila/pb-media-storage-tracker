@@ -104,11 +104,22 @@ const PendingView = (() => {
           ${Icons.check()} Confirm
         </button>
         <button class="btn btn-secondary btn-sm" id="decline-${esc(p.transactionId)}"
-          onclick="PendingView.respond('${esc(p.transactionId)}','decline')">
+          onclick="PendingView.confirmDecline('${esc(p.transactionId)}','${esc(p.actorName)}','${esc(p.deviceLabel)}')">
           ${Icons.x()} Decline
         </button>
       </div>
     </div>`;
+  }
+
+  // ── Confirm before declining ──────────────────────────────────
+  function confirmDecline(txnId, actorName, deviceLabel) {
+    Modal.confirm({
+      title:        `${Icons.x()} Decline Transfer?`,
+      message:      `Decline the transfer of <strong>${esc(deviceLabel)}</strong> from <strong>${esc(actorName)}</strong>? They will need to initiate a new transfer if needed.`,
+      confirmLabel: `${Icons.x()} Yes, Decline`,
+      confirmClass: 'btn-danger',
+      onConfirm:    () => respond(txnId, 'decline')
+    });
   }
 
   function _timestampEl() {
@@ -175,5 +186,5 @@ const PendingView = (() => {
     </div>` + _timestampEl();
   }
 
-  return { render, respond };
+  return { render, respond, confirmDecline };
 })();
