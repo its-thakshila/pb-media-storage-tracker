@@ -6,8 +6,8 @@
 
 // ── CONFIG ─────────────────────────────────────────────────
 // Replace this with your actual OAuth 2.0 Client ID after setup.
-const OAUTH_CLIENT_ID = "YOUR_OAUTH_CLIENT_ID_HERE";
-const SPREADSHEET_ID  = "YOUR_SPREADSHEET_ID_HERE"; // from the Sheet URL
+const OAUTH_CLIENT_ID = "812045761718-qh784i5vtvsbna3gma0chjrp8djii6bn.apps.googleusercontent.com";
+const SPREADSHEET_ID  = "14tnI5_kFf8l31aRN8ZNZ2ZzAY1jbidueLOEKy2hoPmY"; // from the Sheet URL
 
 // ── SHEET NAMES ─────────────────────────────────────────────
 const SHEET_MEMBERS      = "Members";
