@@ -56,6 +56,9 @@ const HistoryView = (() => {
       case 'NewbieHandoff':
         return { dotClass: 'dot-newbie',    badgeClass: 'badge-newbie',
                  desc: `${Icons.user()} ${esc(t.actorName)} gave physical possession to a newbie` };
+      case 'NewbieReturned':
+        return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
+                 desc: `${Icons.check()} Newbie returned device to ${esc(t.actorName)}` };
       case 'LostDamagedReported':
         return { dotClass: 'dot-lost',      badgeClass: 'badge-lost',
                  desc: `${Icons.alert()} Reported by ${esc(t.actorName)}` };

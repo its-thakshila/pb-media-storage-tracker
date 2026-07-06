@@ -45,6 +45,7 @@ const API = (() => {
     initiateTransfer:    (p)            => call("initiateTransfer",   p),
     respondToTransfer:   (p)            => call("respondToTransfer",  p),
     logNewbieHandoff:    (p)            => call("logNewbieHandoff",   p),
+    returnFromNewbie:    (p)            => call("returnFromNewbie",   p),
     reportLostDamaged:   (p)            => call("reportLostDamaged",  p),
     addDevice:           (p)            => call("addDevice",          p),
     approveMember:       (p)            => call("approveMember",      p),

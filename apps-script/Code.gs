@@ -46,6 +46,7 @@ function doPost(e) {
       case "initiateTransfer":  result = actionInitiateTransfer(caller, payload);            break;
       case "respondToTransfer": result = actionRespondToTransfer(caller, payload);           break;
       case "logNewbieHandoff":  result = actionLogNewbieHandoff(caller, payload);            break;
+      case "returnFromNewbie":  result = actionReturnFromNewbie(caller, payload);            break;
       case "reportLostDamaged": result = actionReportLostDamaged(caller, payload);           break;
       case "addDevice":         result = actionAddDevice(caller, payload);                   break;
       case "approveMember":     result = actionApproveMember(caller, payload);               break;
@@ -520,6 +521,50 @@ function actionLogNewbieHandoff(caller, payload) {
 
   updateRowCols(SHEET_DEVICES, device._rowIndex, {
     PhysicallyWithNote: physicalNote,
+    LastUpdated:        ts
+  });
+  _invalidateCache(); // devices list changed
+
+  return { transactionId: txnId };
+}
+
+// ── returnFromNewbie ────────────────────────────────────────────
+function actionReturnFromNewbie(caller, payload) {
+  const { deviceLabel, notes } = payload;
+  if (!deviceLabel) throw new Error("deviceLabel is required.");
+
+  const device = getDeviceByLabel(deviceLabel);
+  if (!device) throw new Error("Device not found: " + deviceLabel);
+  if (String(device.CurrentHolderEmail).toLowerCase() !== caller.Email.toLowerCase()) {
+    throw new Error("You are not the current holder of this device.");
+  }
+  if (device.Status !== "Active") {
+    throw new Error("This device is not active.");
+  }
+  if (!device.PhysicallyWithNote) {
+    throw new Error("This device is not recorded as being with a newbie.");
+  }
+
+  const ts    = nowIso();
+  const txnId = generateTxnId();
+
+  appendRow(SHEET_TRANSACTIONS, {
+    TransactionID:        txnId,
+    Timestamp:            ts,
+    DeviceLabel:          deviceLabel,
+    ActionType:           "NewbieReturned",
+    ActorEmail:           caller.Email,
+    CameraModel:          "",
+    CounterpartyEmail:    "",
+    NewbieName:           "",
+    Notes:                notes || "",
+    TransferStatus:       "N/A",
+    LinkedTransactionID:  ""
+  });
+
+  // Clear the newbie note — device is back with the holder
+  updateRowCols(SHEET_DEVICES, device._rowIndex, {
+    PhysicallyWithNote: "",
     LastUpdated:        ts
   });
   _invalidateCache(); // devices list changed

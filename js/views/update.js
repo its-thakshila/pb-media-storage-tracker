@@ -137,6 +137,43 @@ const UpdateView = (() => {
     }
   }
 
+  // ── Newbie Returned It ────────────────────────────────────────
+  function openReturnFromNewbie(deviceLabel, currentNote) {
+    Modal.open({
+      title: `Newbie Returned It - ${deviceLabel}`,
+      body: `
+        <p class="text-muted" style="font-size:.875rem;margin-bottom:16px">
+          Confirm that the device has been returned to you from the newbie.
+          This clears the newbie record and marks you as the physical holder again.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Notes (optional)</label>
+          <textarea id="rfn-notes" class="form-control" rows="2"
+            placeholder="e.g. Device returned in good condition"></textarea>
+        </div>`,
+      footer: `<button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+               <button class="btn btn-primary" onclick="UpdateView.submitReturnFromNewbie('${esc(deviceLabel)}')">
+                 ${Icons.check()} Confirm Return
+               </button>`
+    });
+  }
+
+  async function submitReturnFromNewbie(deviceLabel) {
+    const notes = document.getElementById('rfn-notes').value.trim();
+    try {
+      Saving.show();
+      HomeView.invalidateCache();
+      await API.returnFromNewbie({ deviceLabel, notes });
+      Toast.show('Device returned from newbie. You hold it again.', 'success');
+      Modal.close();
+      HomeView.render(true);
+    } catch (err) {
+      Toast.show(err.message, 'error');
+    } finally {
+      Saving.hide();
+    }
+  }
+
   // ── Report Lost / Damaged ────────────────────────────────────
   function openLostDamaged(deviceLabel) {
     Modal.open({
@@ -178,5 +215,5 @@ const UpdateView = (() => {
     }
   }
 
-  return { openKept, submitKept, openHandOver, submitHandOver, openNewbie, submitNewbie, openLostDamaged, submitLostDamaged };
+  return { openKept, submitKept, openHandOver, submitHandOver, openNewbie, submitNewbie, openReturnFromNewbie, submitReturnFromNewbie, openLostDamaged, submitLostDamaged };
 })();
