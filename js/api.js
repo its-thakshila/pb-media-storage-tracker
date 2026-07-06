@@ -50,6 +50,6 @@ const API = (() => {
     addDevice:           (p)            => call("addDevice",          p),
     approveMember:       (p)            => call("approveMember",      p),
     removeMember:        (p)            => call("removeMember",       p),
-    correctLogEntry:     (p)            => call("correctLogEntry",    p),
+    adminOverrideTransfer: (p)            => call("adminOverrideTransfer", p),
   };
 })();

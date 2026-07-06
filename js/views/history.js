@@ -82,9 +82,10 @@ const HistoryView = (() => {
       case 'DeviceAdded':
         return { dotClass: 'dot-added',     badgeClass: 'badge-neutral',
                  desc: `${Icons.package()} Device added by ${esc(t.actorName)}` };
-      case 'AdminCorrection':
-        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
-                 desc: `${Icons.settings()} Admin correction by ${esc(t.actorName)}` };
+      case 'AdminOverride':
+        // Red-ish to signal a significant admin action — ownership was force-changed
+        return { dotClass: 'dot-lost',    badgeClass: 'badge-lost',
+                 desc: `${Icons.settings()} Admin override: ${esc(t.counterpartyName || 'unknown')} is new holder` };
       default:
         return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral', desc: esc(t.actionType) };
     }

@@ -158,14 +158,19 @@
         <div id="history-content"></div>
       </div>
 
-      <!-- Admin: Correct Log Entry -->
+      <!-- Admin: Override Transfer -->
       <div class="admin-only" style="margin-top:16px">
-        <button class="btn btn-secondary btn-sm" onclick="AdminView.openCorrectLog()">Add Admin Correction</button>
+        <button class="btn btn-secondary btn-sm" onclick="AdminView.openOverrideTransfer()">Admin Override Transfer</button>
       </div>
     </div>
   </div>
 
 </div><!-- /.app-shell -->
+
+<!-- ── Footer ───────────────────────────────────────────── -->
+<footer class="app-footer">
+  <p>&copy; 2025 perabeats Media Society &middot; University of Peradeniya &middot; All rights reserved.</p>
+</footer>
 
 <!-- ── Scripts ───────────────────────────────────────────── -->
 <script src="js/config.js"></script>
@@ -310,37 +315,49 @@ const Router = {
 <script src="js/views/history.js"></script>
 <script src="js/views/update.js"></script>
 <script>
-// ── Admin: Correct Log Entry ──────────────────────────────
+// ── Admin: Override Transfer ──────────────────────────────
 const AdminView = {
-  openCorrectLog() {
+  async openOverrideTransfer() {
     const label = document.getElementById('history-device-label').textContent;
+    // Load active members for the dropdown
+    let memberOptions = '<option value="">Select new holder...</option>';
+    try {
+      const members = await API.listMembers();
+      memberOptions += members.map(m =>
+        `<option value="${esc(m.email)}">${esc(m.name)} (${esc(m.title || m.role)})</option>`
+      ).join('');
+    } catch(e) {
+      Toast.show('Could not load member list.', 'error'); return;
+    }
     Modal.open({
-      title: `${Icons.settings()} Admin Correction`,
+      title: `${Icons.settings()} Admin Override Transfer`,
       body: `
         <p class="text-muted" style="font-size:.875rem;margin-bottom:16px">
-          Enter the Transaction ID to flag, and a correction note. The original row is never modified - a new row is appended.
+          Force-reassign <strong>${esc(label)}</strong> to any active member.
+          This bypasses normal transfer flow and takes immediate effect.
         </p>
         <div class="form-group">
-          <label class="form-label">Transaction ID to correct</label>
-          <input id="ac-txnid" class="form-control" placeholder="TXN-00001" />
+          <label class="form-label">New Holder</label>
+          <select id="ao-holder" class="form-control">${memberOptions}</select>
         </div>
         <div class="form-group">
-          <label class="form-label">Correction Note</label>
-          <textarea id="ac-note" class="form-control" rows="3" placeholder="What was wrong and what the correct information is"></textarea>
+          <label class="form-label">Reason for Override</label>
+          <textarea id="ao-reason" class="form-control" rows="3" placeholder="Why is this override necessary?"></textarea>
         </div>`,
       footer: `<button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
-               <button class="btn btn-primary" onclick="AdminView.submitCorrectLog()">Submit Correction</button>`
+               <button class="btn btn-primary" onclick="AdminView.submitOverrideTransfer('${esc(label)}')">Apply Override</button>`
     });
   },
-  async submitCorrectLog() {
-    const transactionId  = document.getElementById('ac-txnid').value.trim();
-    const correctionNote = document.getElementById('ac-note').value.trim();
-    if (!transactionId || !correctionNote) { Toast.show('Fill in all fields.', 'error'); return; }
+  async submitOverrideTransfer(deviceLabel) {
+    const newHolderEmail = document.getElementById('ao-holder').value.trim();
+    const reason         = document.getElementById('ao-reason').value.trim();
+    if (!newHolderEmail || !reason) { Toast.show('Fill in all fields.', 'error'); return; }
     try {
       Saving.show();
-      await API.correctLogEntry({ transactionId, correctionNote });
-      Toast.show('Correction logged.', 'success');
+      await API.adminOverrideTransfer({ deviceLabel, newHolderEmail, reason });
+      Toast.show('Override applied. Device reassigned.', 'success');
       Modal.close();
+      HomeView.refresh();
     } catch (err) {
       Toast.show(err.message, 'error');
     } finally {

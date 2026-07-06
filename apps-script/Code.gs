@@ -51,7 +51,7 @@ function doPost(e) {
       case "addDevice":         result = actionAddDevice(caller, payload);                   break;
       case "approveMember":     result = actionApproveMember(caller, payload);               break;
       case "removeMember":      result = actionRemoveMember(caller, payload);                break;
-      case "correctLogEntry":   result = actionCorrectLogEntry(caller, payload);             break;
+      case "adminOverrideTransfer": result = actionAdminOverrideTransfer(caller, payload);          break;
       default:
         throw new Error("Unknown action: " + action);
     }
@@ -560,6 +560,13 @@ function actionReturnFromNewbie(caller, payload) {
   const ts    = nowIso();
   const txnId = generateTxnId();
 
+  // Link back to the most recent NewbieHandoff for this device
+  const allTxns   = getSheetData(SHEET_TRANSACTIONS);
+  const lastHandoff = allTxns
+    .filter(t => String(t.DeviceLabel).trim() === deviceLabel.trim() && t.ActionType === "NewbieHandoff")
+    .pop();
+  const linkedId = lastHandoff ? lastHandoff.TransactionID : "";
+
   appendRow(SHEET_TRANSACTIONS, {
     TransactionID:        txnId,
     Timestamp:            ts,
@@ -571,7 +578,7 @@ function actionReturnFromNewbie(caller, payload) {
     NewbieName:           "",
     Notes:                notes || "",
     TransferStatus:       "N/A",
-    LinkedTransactionID:  ""
+    LinkedTransactionID:  linkedId
   });
 
   // Clear the newbie note — device is back with the holder
@@ -727,39 +734,48 @@ function actionRemoveMember(caller, payload) {
   return { email, action: "deactivated" };
 }
 
-// ── correctLogEntry ──────────────────────────────────────────
-function actionCorrectLogEntry(caller, payload) {
+// ── adminOverrideTransfer ────────────────────────────────────
+function actionAdminOverrideTransfer(caller, payload) {
   requireAdmin(caller);
-  const { transactionId, correctionNote } = payload;
-  if (!transactionId)  throw new Error("transactionId is required.");
-  if (!correctionNote) throw new Error("correctionNote is required.");
+  const { deviceLabel, newHolderEmail, reason } = payload;
+  if (!deviceLabel)    throw new Error("deviceLabel is required.");
+  if (!newHolderEmail) throw new Error("newHolderEmail is required.");
+  if (!reason)         throw new Error("reason is required.");
 
-  // Find the original transaction to copy its DeviceLabel.
-  // Without a DeviceLabel the correction row is filtered out of
-  // getDeviceHistory and never appears on the timeline — this is the fix.
-  const txns     = getSheetData(SHEET_TRANSACTIONS);
-  const original = txns.find(function(t) {
-    return String(t.TransactionID).trim() === String(transactionId).trim();
-  });
-  if (!original) throw new Error("Original transaction not found: " + transactionId);
+  const device = getDeviceByLabel(deviceLabel);
+  if (!device) throw new Error("Device not found: " + deviceLabel);
 
-  const deviceLabel = original.DeviceLabel || "";
-  const txnId       = generateTxnId();
-  const ts          = nowIso();
+  const newHolder = getMemberByEmail(newHolderEmail);
+  if (!newHolder || newHolder.Active !== "Y") {
+    throw new Error("New holder is not an approved active member.");
+  }
+
+  const prevHolderEmail = device.CurrentHolderEmail;
+  const ts    = nowIso();
+  const txnId = generateTxnId();
 
   appendRow(SHEET_TRANSACTIONS, {
     TransactionID:        txnId,
     Timestamp:            ts,
     DeviceLabel:          deviceLabel,
-    ActionType:           "AdminCorrection",
+    ActionType:           "AdminOverride",
     ActorEmail:           caller.Email,
     CameraModel:          "",
-    CounterpartyEmail:    "",
+    CounterpartyEmail:    newHolderEmail,
     NewbieName:           "",
-    Notes:                correctionNote,
-    TransferStatus:       "N/A",
-    LinkedTransactionID:  transactionId
+    Notes:                reason,
+    TransferStatus:       "Confirmed",
+    LinkedTransactionID:  ""
   });
 
-  return { transactionId: txnId, deviceLabel };
+  // Force-update the device: new holder, clear any pending transfer or newbie note
+  updateRowCols(SHEET_DEVICES, device._rowIndex, {
+    CurrentHolderEmail:   newHolderEmail,
+    HasPendingTransferTo: "",
+    PhysicallyWithNote:   "",
+    LastUpdated:          ts
+  });
+  _invalidateCache();
+
+  return { transactionId: txnId, prevHolderEmail, newHolderEmail };
 }
