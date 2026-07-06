@@ -19,6 +19,7 @@
   --status-newbie: #A855F7;
   --status-neutral: #6B7280;
   --status-lost: #E4202C;
+  --status-transfer: #3B82F6; /* blue — regular member-to-member transfers */
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -761,6 +762,16 @@ textarea.form-control {
 
 .dot-added {
   background: var(--text-secondary);
+}
+
+/* Blue: regular member-to-member transfers */
+.dot-transfer {
+  background: var(--status-transfer);
+}
+
+.badge-transfer {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--status-transfer);
 }
 
 .timeline-time {

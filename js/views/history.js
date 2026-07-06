@@ -40,16 +40,25 @@ const HistoryView = (() => {
   }
 
   function formatEntry(t) {
+    // Helper: is this person the Resource Coordinator (Admin)?
+    const isRC = (role) => role === 'Admin';
+
     switch (t.actionType) {
       case 'Kept':
         return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
                  desc: `${Icons.pin()} ${esc(t.actorName)} kept the device` };
       case 'TransferInitiated':
-        return { dotClass: 'dot-pending',   badgeClass: 'badge-pending',
+        // Always blue — it's a member-to-member transfer in progress
+        return { dotClass: 'dot-transfer',  badgeClass: 'badge-transfer',
                  desc: `${Icons.arrowRight()} ${esc(t.actorName)} to ${esc(t.counterpartyName)} (pending)` };
       case 'TransferConfirmed':
-        return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
-                 desc: `${Icons.check()} Confirmed: ${esc(t.counterpartyName)} to ${esc(t.actorName)}` };
+        // Green if the recipient (actor) is the RC; blue for all other confirmed transfers
+        if (isRC(t.actorRole)) {
+          return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
+                   desc: `${Icons.check()} Returned to RC: ${esc(t.counterpartyName)} → ${esc(t.actorName)}` };
+        }
+        return { dotClass: 'dot-transfer',  badgeClass: 'badge-transfer',
+                 desc: `${Icons.check()} Transfer confirmed: ${esc(t.counterpartyName)} to ${esc(t.actorName)}` };
       case 'TransferDeclined':
         return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
                  desc: `${Icons.x()} ${esc(t.actorName)} declined transfer from ${esc(t.counterpartyName)}` };
@@ -57,6 +66,7 @@ const HistoryView = (() => {
         return { dotClass: 'dot-newbie',    badgeClass: 'badge-newbie',
                  desc: `${Icons.user()} ${esc(t.actorName)} gave physical possession to a newbie` };
       case 'NewbieReturned':
+        // Always green — device back with the responsible holder
         return { dotClass: 'dot-confirmed', badgeClass: 'badge-confirmed',
                  desc: `${Icons.check()} Newbie returned device to ${esc(t.actorName)}` };
       case 'LostDamagedReported':

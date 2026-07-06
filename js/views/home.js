@@ -156,10 +156,9 @@ const HomeView = (() => {
     if (isHolder && device.status === 'Active' && !device.hasPendingTransferTo) {
       if (device.physicallyWithNote) {
         // ── Device is physically with a newbie ───────────────
-        // "Kept with me" makes no sense here (you don't have it).
-        // Show a contextual "Newbie Returned It" action instead.
+        // Hand Over is hidden: retrieve the device first, then transfer.
+        // "Kept with me" is also hidden (you don't have it physically).
         actions.push(`<button class="btn btn-primary btn-full" onclick="Modal.close();UpdateView.openReturnFromNewbie('${esc(label)}')">${Icons.user()} Newbie Returned It</button>`);
-        actions.push(`<button class="btn btn-primary btn-full" onclick="Modal.close();UpdateView.openHandOver('${esc(label)}')">${Icons.arrowRight()} Hand Over</button>`);
         actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="Modal.close();UpdateView.openLostDamaged('${esc(label)}')">${Icons.flag()} Report Lost / Damaged</button>`);
       } else {
         // ── Holder physically has the device ────────────────

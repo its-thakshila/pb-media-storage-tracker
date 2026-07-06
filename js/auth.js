@@ -11,18 +11,18 @@ const Auth = (() => {
 
   let _googleInitialized = false;
 
-  function getToken()   { return sessionStorage.getItem(SESSION_KEY_TOKEN); }
-  function getUser()    { const u = sessionStorage.getItem(SESSION_KEY_USER); return u ? JSON.parse(u) : null; }
+  function getToken()   { return localStorage.getItem(SESSION_KEY_TOKEN); }
+  function getUser()    { const u = localStorage.getItem(SESSION_KEY_USER); return u ? JSON.parse(u) : null; }
   function isLoggedIn() { return !!getToken() && !!getUser(); }
 
   function saveSession(token, user) {
-    sessionStorage.setItem(SESSION_KEY_TOKEN, token);
-    sessionStorage.setItem(SESSION_KEY_USER,  JSON.stringify(user));
+    localStorage.setItem(SESSION_KEY_TOKEN, token);
+    localStorage.setItem(SESSION_KEY_USER,  JSON.stringify(user));
   }
 
   function clearSession() {
-    sessionStorage.removeItem(SESSION_KEY_TOKEN);
-    sessionStorage.removeItem(SESSION_KEY_USER);
+    localStorage.removeItem(SESSION_KEY_TOKEN);
+    localStorage.removeItem(SESSION_KEY_USER);
     if (window.google && _googleInitialized) {
       try { google.accounts.id.disableAutoSelect(); } catch(_) {}
     }
@@ -59,7 +59,7 @@ const Auth = (() => {
       google.accounts.id.initialize({
         client_id:              CONFIG.OAUTH_CLIENT_ID,
         callback:               (response) => _handleCredential(response, onSuccess, onError),
-        auto_select:            false,
+        auto_select:            true,  // silently re-selects last account when token expires
         cancel_on_tap_outside:  true,
       });
 
@@ -74,7 +74,7 @@ const Auth = (() => {
         });
       }
 
-      // One-tap for returning users
+      // One-tap for returning users — also handles silent token refresh
       google.accounts.id.prompt();
       _googleInitialized = true;
     } catch (err) {
