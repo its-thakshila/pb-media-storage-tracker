@@ -1,5 +1,5 @@
 // ============================================================
-//  Perabeats Media Storage Tracker — Google Apps Script Backend
+//  perabeats Card Log — Google Apps Script Backend
 //  Reference: spec_doc.md §10 (API Contract), §11 (Auth Flow)
 //  CORS workaround: §12 — accept text/plain body, parse JSON
 // ============================================================
