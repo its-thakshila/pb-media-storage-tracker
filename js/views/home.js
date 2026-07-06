@@ -106,11 +106,20 @@ const HomeView = (() => {
 
   function buildStatusBadge(d) {
     if (d.hasPendingTransferTo) {
-      return `<span class="badge badge-pending">${Icons.arrowRight()} ${esc(firstName(d.currentHolderName))} - ${esc(firstName(d.pendingRecipientName))}</span>`;
+      return `<span class="badge badge-pending">${Icons.arrowRight()} ${esc(firstName(d.currentHolderName))} to ${esc(firstName(d.pendingRecipientName))}</span>`;
     }
     if (d.status === 'Lost')    return `<span class="badge badge-lost">${Icons.alert()} Lost</span>`;
     if (d.status === 'Damaged') return `<span class="badge badge-damaged">${Icons.alert()} Damaged</span>`;
     return `<span class="text-primary">${esc(firstName(d.currentHolderName))}</span>`;
+  }
+
+  // Status badge for the device info modal — shows meaningful state, not the holder name
+  function buildMenuStatus(d) {
+    if (d.status === 'Lost')       return `<span class="badge badge-lost">${Icons.alert()} Lost</span>`;
+    if (d.status === 'Damaged')    return `<span class="badge badge-damaged">${Icons.alert()} Damaged</span>`;
+    if (d.hasPendingTransferTo)    return `<span class="badge badge-pending">${Icons.arrowRight()} Transfer Pending - to ${esc(firstName(d.pendingRecipientName))}</span>`;
+    if (d.physicallyWithNote)      return `<span class="badge badge-newbie">${Icons.user()} With Newbie</span>`;
+    return `<span class="badge badge-active">${Icons.check()} Active</span>`;
   }
 
   function buildHolderText(d) {
@@ -134,12 +143,13 @@ const HomeView = (() => {
     const isHolder = device.currentHolderEmail?.toLowerCase() === user?.email?.toLowerCase();
     const isAdmin  = user?.role === 'Admin';
 
-    // Build device info rows — all references use `device`, no stale `d`
+    // Build device info rows — uses buildMenuStatus for a meaningful Status field
     const infoHtml = `<div class="device-menu-info">
       <div class="device-menu-row"><span class="text-muted">Type</span><span>${esc(device.deviceType)} - ${esc(device.capacity)}</span></div>
-      <div class="device-menu-row"><span class="text-muted">Status</span>${buildStatusBadge(device)}</div>
+      <div class="device-menu-row"><span class="text-muted">Status</span>${buildMenuStatus(device)}</div>
       <div class="device-menu-row"><span class="text-muted">Holder</span><span>${esc(device.currentHolderName)}</span></div>
-      ${device.physicallyWithNote ? `<div class="device-menu-row"><span class="text-muted">Note</span><span class="text-muted" style="font-size:.85rem">${esc(device.physicallyWithNote)}</span></div>` : ''}
+      ${device.physicallyWithNote ? `<div class="device-menu-row"><span class="text-muted">With</span><span class="text-muted" style="font-size:.85rem">${esc(device.physicallyWithNote)}</span></div>` : ''}
+      ${device.lastUpdated ? `<div class="device-menu-row"><span class="text-muted">Updated</span><span class="text-muted" style="font-size:.85rem">${timeAgo(device.lastUpdated)}</span></div>` : ''}
     </div>`;
 
     const actions = [];

@@ -208,6 +208,17 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ── Mobile: prevent pinch-zoom + double-tap zoom (iOS ignores user-scalable=no) ──
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 1) e.preventDefault(); // block pinch
+}, { passive: false });
+let _lastTap = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - _lastTap < 300) e.preventDefault(); // block double-tap zoom
+  _lastTap = now;
+}, { passive: false });
+
 function timeAgo(isoStr) {
   if (!isoStr) return '—';
   const date = new Date(isoStr);
