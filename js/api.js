@@ -5,7 +5,7 @@
 
 const API = (() => {
 
-  async function call(action, payload = {}) {
+  async function call(action, payload = {}, _isRetry = false) {
     const idToken = Auth.getToken();
     if (!idToken && action !== "authCheck") {
       throw new Error("Not authenticated.");
@@ -30,7 +30,16 @@ const API = (() => {
 
     const json = await response.json();
     if (!json.success) {
-      throw new Error(json.error || "An unknown error occurred.");
+      const msg = json.error || "An unknown error occurred.";
+
+      // Token expired mid-session — silently refresh and retry once
+      const isAuthErr = /expired|invalid.*token|authentication/i.test(msg);
+      if (isAuthErr && !_isRetry) {
+        const refreshed = await Auth.silentRefresh();
+        if (refreshed) return call(action, payload, true); // retry with new token
+      }
+
+      throw new Error(msg);
     }
     return json.data;
   }

@@ -10,10 +10,19 @@ const Auth = (() => {
   const SESSION_KEY_USER  = "pb_current_user";
 
   let _googleInitialized = false;
+  let _refreshTimer      = null; // proactive token refresh timer
 
   function getToken()   { return localStorage.getItem(SESSION_KEY_TOKEN); }
   function getUser()    { const u = localStorage.getItem(SESSION_KEY_USER); return u ? JSON.parse(u) : null; }
   function isLoggedIn() { return !!getToken() && !!getUser(); }
+
+  // Decode a JWT payload without verifying (we trust Google's own token here)
+  function _jwtExp(token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp || 0; // unix seconds
+    } catch (_) { return 0; }
+  }
 
   function saveSession(token, user) {
     localStorage.setItem(SESSION_KEY_TOKEN, token);
@@ -23,9 +32,58 @@ const Auth = (() => {
   function clearSession() {
     localStorage.removeItem(SESSION_KEY_TOKEN);
     localStorage.removeItem(SESSION_KEY_USER);
+    if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; }
     if (window.google && _googleInitialized) {
       try { google.accounts.id.disableAutoSelect(); } catch(_) {}
     }
+  }
+
+  // Schedule a silent token refresh 5 minutes before the JWT expires
+  function _scheduleRefresh(token) {
+    if (_refreshTimer) clearTimeout(_refreshTimer);
+    const exp     = _jwtExp(token);
+    if (!exp) return;
+    const nowSec  = Math.floor(Date.now() / 1000);
+    const msLeft  = (exp - nowSec - 300) * 1000; // 5 min early
+    if (msLeft <= 0) { _silentRefresh(); return; } // already close/past — refresh now
+    _refreshTimer = setTimeout(_silentRefresh, msLeft);
+  }
+
+  // Ask GIS to silently issue a new token using the existing Google session.
+  // The credential callback fires with a fresh token, updating localStorage.
+  function _silentRefresh() {
+    if (!window.google || !_googleInitialized) return;
+    try { google.accounts.id.prompt(); } catch (_) {}
+  }
+
+  // Public: called by API layer on auth failure to get a fresh token, then retry
+  function silentRefresh() {
+    return new Promise((resolve) => {
+      if (!window.google || !_googleInitialized) { resolve(false); return; }
+      // Override the credential callback temporarily to catch the new token
+      try {
+        google.accounts.id.initialize({
+          client_id:             CONFIG.OAUTH_CLIENT_ID,
+          callback:              async (response) => {
+            if (!response.credential) { resolve(false); return; }
+            const token = response.credential;
+            localStorage.setItem(SESSION_KEY_TOKEN, token);
+            _scheduleRefresh(token);
+            // Restore normal callback
+            google.accounts.id.initialize({
+              client_id:            CONFIG.OAUTH_CLIENT_ID,
+              callback:             (r) => _handleCredential(r, () => {}, () => {}),
+              auto_select:          true,
+              cancel_on_tap_outside: true,
+            });
+            resolve(true);
+          },
+          auto_select:           true,
+          cancel_on_tap_outside: true,
+        });
+        google.accounts.id.prompt();
+      } catch (_) { resolve(false); }
+    });
   }
 
   /**
@@ -98,6 +156,7 @@ const Auth = (() => {
     try {
       const user = await API.authCheck();
       saveSession(token, user);
+      _scheduleRefresh(token); // proactively refresh before 1-hour expiry
       onSuccess(user);
       // Leave loading visible — the view will switch immediately after
     } catch (err) {
@@ -122,5 +181,5 @@ const Auth = (() => {
     if (onComplete) onComplete();
   }
 
-  return { initSignIn, signOut, getToken, getUser, isLoggedIn };
+  return { initSignIn, signOut, getToken, getUser, isLoggedIn, silentRefresh };
 })();
