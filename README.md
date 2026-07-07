@@ -186,4 +186,4 @@ const CONFIG = {
 
 ## License
 
-Internal tool — © 2025 perabeats Media Society, University of Peradeniya. All rights reserved.
+Internal tool — © 2026 perabeats Media Society, University of Peradeniya. All rights reserved.
