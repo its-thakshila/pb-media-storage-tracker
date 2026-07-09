@@ -84,8 +84,9 @@ const Auth = (() => {
 
     try {
       const user = await API.authCheck();
-      // user.appToken is our custom 90-day token. Overwrite the Google token!
-      saveSession(user.appToken, user);
+      // user.appToken is our custom 90-day token. Fallback to Google token if backend isn't deployed yet.
+      const finalToken = user.appToken || token;
+      saveSession(finalToken, user);
       onSuccess(user);
     } catch (err) {
       clearSession();
