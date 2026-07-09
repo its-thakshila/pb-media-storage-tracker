@@ -424,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (Auth.isLoggedIn()) {
     const user = Auth.getUser();
     _onLoginSuccess(user);
-    Auth.restoreSession();
   } else {
     Auth.initSignIn(
       (user) => _onLoginSuccess(user),

@@ -74,30 +74,67 @@ function doGet(e) {
 //  AUTH HELPERS
 // ============================================================
 
-/**
- * Verifies the Google ID token server-side using tokeninfo endpoint.
- * Extracts the email and looks up the member in the sheet.
- * Throws if invalid, expired, wrong audience, or member not approved/active.
- */
-function verifyToken(idToken) {
-  if (!idToken) throw new Error("No authentication token provided.");
-
-  const url      = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
-  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-  const info     = JSON.parse(response.getContentText());
-
-  if (info.error || !info.email) {
-    throw new Error("Invalid or expired authentication token. Please sign in again.");
+function getAppSecret() {
+  const props = PropertiesService.getScriptProperties();
+  let secret = props.getProperty("APP_SECRET");
+  if (!secret) {
+    secret = Utilities.getUuid() + Utilities.getUuid();
+    props.setProperty("APP_SECRET", secret);
   }
-  if (info.aud !== OAUTH_CLIENT_ID) {
-    throw new Error("Token audience mismatch. Authentication failed.");
-  }
+  return secret;
+}
+
+function createAppToken(email) {
+  const exp = Math.floor(Date.now() / 1000) + (90 * 24 * 60 * 60); // 90 days
+  const payload = email + "|" + exp;
+  const sig = Utilities.base64EncodeWebSafe(
+    Utilities.computeHmacSha256Signature(payload, getAppSecret())
+  );
+  return Utilities.base64EncodeWebSafe(payload) + "." + sig;
+}
+
+function verifyAppToken(token) {
+  const parts = token.split(".");
+  if (parts.length !== 2) throw new Error("Invalid session token format.");
+  const payload = Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString();
+  const sig = parts[1];
+  
+  const expectedSig = Utilities.base64EncodeWebSafe(
+    Utilities.computeHmacSha256Signature(payload, getAppSecret())
+  );
+  if (sig !== expectedSig) throw new Error("Invalid session token signature.");
+  
+  const [email, expStr] = payload.split("|");
   const nowSec = Math.floor(Date.now() / 1000);
-  if (parseInt(info.exp, 10) < nowSec) {
-    throw new Error("Authentication token has expired. Please sign in again.");
+  if (parseInt(expStr, 10) < nowSec) {
+    throw new Error("Session expired. Please sign in again.");
+  }
+  return email;
+}
+
+/**
+ * Verifies the token.
+ * If it's a 3-part Google JWT, verifies via tokeninfo (used only at login).
+ * If it's a 2-part AppToken, verifies locally (used for 90 days).
+ */
+function verifyToken(token) {
+  if (!token) throw new Error("No authentication token provided.");
+  
+  let email;
+  if (token.split(".").length === 3) {
+    // Google ID Token
+    const url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + token;
+    const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    const info = JSON.parse(response.getContentText());
+    if (info.error || !info.email) throw new Error("Invalid or expired Google token. Please sign in again.");
+    if (info.aud !== OAUTH_CLIENT_ID) throw new Error("Token audience mismatch.");
+    if (parseInt(info.exp, 10) < Math.floor(Date.now() / 1000)) throw new Error("Authentication token has expired. Please sign in again.");
+    email = info.email.toLowerCase();
+  } else {
+    // 90-day AppToken
+    email = verifyAppToken(token).toLowerCase();
   }
 
-  const email  = info.email.toLowerCase();
   const member = getMemberByEmail(email);
   if (!member) {
     throw new Error("This account isn't registered. Contact an Admin to get added.");
@@ -250,7 +287,13 @@ function jsonResponse(obj) {
 
 // ── authCheck ────────────────────────────────────────────────
 function actionAuthCheck(caller) {
-  return { email: caller.Email, name: caller.Name, role: caller.Role, title: caller.Title || "" };
+  return { 
+    email: caller.Email, 
+    name: caller.Name, 
+    role: caller.Role, 
+    title: caller.Title || "",
+    appToken: createAppToken(caller.Email)
+  };
 }
 
 // ── listDevices ──────────────────────────────────────────────

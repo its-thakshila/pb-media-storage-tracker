@@ -5,7 +5,7 @@
 
 const API = (() => {
 
-  async function call(action, payload = {}, _isRetry = false) {
+  async function call(action, payload = {}) {
     const idToken = Auth.getToken();
     if (!idToken && action !== "authCheck") {
       throw new Error("Not authenticated.");
@@ -32,15 +32,9 @@ const API = (() => {
     if (!json.success) {
       const msg = json.error || "An unknown error occurred.";
 
-      // Token expired mid-session — silently refresh and retry once
+      // If the 90-day persistent token expires or user is deactivated, force logout
       const isAuthErr = /expired|invalid.*token|authentication/i.test(msg);
       if (isAuthErr) {
-        if (!_isRetry) {
-          const refreshed = await Auth.silentRefresh();
-          if (refreshed) return call(action, payload, true); // retry with new token
-        }
-        
-        // If refresh failed or the retry itself failed, force sign out.
         if (typeof Auth !== "undefined" && typeof Router !== "undefined") {
           Auth.signOut(Router.showLogin);
         }
