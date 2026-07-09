@@ -52,39 +52,62 @@ const Auth = (() => {
   // Ask GIS to silently issue a new token using the existing Google session.
   // The credential callback fires with a fresh token, updating localStorage.
   function _silentRefresh() {
-    if (!window.google || !_googleInitialized) return;
+    if (!window.google) return;
     try { google.accounts.id.prompt(); } catch (_) {}
   }
 
   // Public: called by API layer on auth failure to get a fresh token, then retry
   function silentRefresh() {
     return new Promise((resolve) => {
-      if (!window.google || !_googleInitialized) { resolve(false); return; }
-      // Override the credential callback temporarily to catch the new token
-      try {
-        google.accounts.id.initialize({
-          client_id:             CONFIG.OAUTH_CLIENT_ID,
-          callback:              async (response) => {
-            if (!response.credential) { resolve(false); return; }
-            const token = response.credential;
-            localStorage.setItem(SESSION_KEY_TOKEN, token);
-            _scheduleRefresh(token);
-            // Restore normal callback
-            google.accounts.id.initialize({
-              client_id:            CONFIG.OAUTH_CLIENT_ID,
-              callback:             (r) => _handleCredential(r, () => {}, () => {}),
-              auto_select:          true,
-              cancel_on_tap_outside: true,
-            });
-            resolve(true);
-          },
-          auto_select:           true,
-          cancel_on_tap_outside: true,
-        });
-        google.accounts.id.prompt();
-      } catch (_) { resolve(false); }
+      // Helper to actually perform the refresh once google is ready
+      function doRefresh() {
+        try {
+          google.accounts.id.initialize({
+            client_id:             CONFIG.OAUTH_CLIENT_ID,
+            callback:              async (response) => {
+              if (!response.credential) { resolve(false); return; }
+              const token = response.credential;
+              localStorage.setItem(SESSION_KEY_TOKEN, token);
+              _scheduleRefresh(token);
+              // Restore normal callback
+              google.accounts.id.initialize({
+                client_id:            CONFIG.OAUTH_CLIENT_ID,
+                callback:             (r) => _handleCredential(r, () => {}, () => {}),
+                auto_select:          true,
+                cancel_on_tap_outside: true,
+              });
+              resolve(true);
+            },
+            auto_select:           true,
+            cancel_on_tap_outside: true,
+          });
+          google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
+              resolve(false);
+            }
+          });
+        } catch (_) { resolve(false); }
+      }
+
+      if (window.google) {
+        doRefresh();
+      } else {
+        // Wait up to ~10s for the async GSI script to load
+        let attempts = 0;
+        const interval = setInterval(() => {
+          attempts++;
+          if (window.google) {
+            clearInterval(interval);
+            doRefresh();
+          } else if (attempts >= 34) {
+            clearInterval(interval);
+            resolve(false);
+          }
+        }, 300);
+      }
     });
   }
+
 
   /**
    * Initialises Google Identity Services and renders the Sign-In button.
@@ -181,5 +204,11 @@ const Auth = (() => {
     if (onComplete) onComplete();
   }
 
-  return { initSignIn, signOut, getToken, getUser, isLoggedIn, silentRefresh };
+  // Called on page load if user is already logged in
+  function restoreSession() {
+    const token = getToken();
+    if (token) _scheduleRefresh(token);
+  }
+
+  return { initSignIn, signOut, getToken, getUser, isLoggedIn, silentRefresh, restoreSession };
 })();
