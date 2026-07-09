@@ -34,9 +34,17 @@ const API = (() => {
 
       // Token expired mid-session — silently refresh and retry once
       const isAuthErr = /expired|invalid.*token|authentication/i.test(msg);
-      if (isAuthErr && !_isRetry) {
-        const refreshed = await Auth.silentRefresh();
-        if (refreshed) return call(action, payload, true); // retry with new token
+      if (isAuthErr) {
+        if (!_isRetry) {
+          const refreshed = await Auth.silentRefresh();
+          if (refreshed) return call(action, payload, true); // retry with new token
+        }
+        
+        // If refresh failed or the retry itself failed, force sign out.
+        if (typeof Auth !== "undefined" && typeof Router !== "undefined") {
+          Auth.signOut(Router.showLogin);
+        }
+        throw new Error("Session expired. Please sign in again.");
       }
 
       throw new Error(msg);
