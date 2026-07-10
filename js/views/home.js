@@ -169,6 +169,7 @@ const HomeView = (() => {
       }
     } else if (isHolder && device.hasPendingTransferTo) {
       actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="Modal.close();UpdateView.openCancelTransfer('${esc(label)}')">${Icons.x()} Cancel Transfer</button>`);
+      actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="Modal.close();UpdateView.openLostDamaged('${esc(label)}')">${Icons.flag()} Report Lost / Damaged</button>`);
     } else if (isAdmin && device.status === 'Active') {
       actions.push(`<button class="btn btn-secondary btn-full" style="color:var(--brand-red)" onclick="Modal.close();UpdateView.openLostDamaged('${esc(label)}')">${Icons.flag()} Report Lost / Damaged</button>`);
     }
