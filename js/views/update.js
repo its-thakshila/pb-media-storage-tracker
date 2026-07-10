@@ -104,6 +104,32 @@ const UpdateView = (() => {
     }
   }
 
+  // ── Cancel Transfer ──────────────────────────────────────────
+  function openCancelTransfer(deviceLabel) {
+    Modal.confirm({
+      title:        `${Icons.x()} Cancel Transfer?`,
+      message:      `Are you sure you want to cancel the pending transfer for <strong>${esc(deviceLabel)}</strong>? The device will remain recorded as being with you.`,
+      confirmLabel: `${Icons.x()} Cancel Transfer`,
+      confirmClass: 'btn-danger',
+      onConfirm: async () => {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try {
+          Saving.show();
+          HomeView.invalidateCache();
+          await API.cancelTransfer({ deviceLabel });
+          Toast.show('Transfer cancelled successfully.', 'success');
+          HomeView.render(true);
+        } catch (err) {
+          Toast.show(err.message, 'error');
+        } finally {
+          isSubmitting = false;
+          Saving.hide();
+        }
+      }
+    });
+  }
+
   // ── Gave to a Newbie ─────────────────────────────────────────
   function openNewbie(deviceLabel) {
     Modal.open({
@@ -242,5 +268,5 @@ const UpdateView = (() => {
     });
   }
 
-  return { openKept, submitKept, openHandOver, submitHandOver, openNewbie, submitNewbie, openReturnFromNewbie, submitReturnFromNewbie, openLostDamaged, submitLostDamaged };
+  return { openKept, submitKept, openHandOver, submitHandOver, openCancelTransfer, openNewbie, submitNewbie, openReturnFromNewbie, submitReturnFromNewbie, openLostDamaged, submitLostDamaged };
 })();

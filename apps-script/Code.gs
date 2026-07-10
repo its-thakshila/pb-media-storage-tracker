@@ -45,6 +45,7 @@ function doPost(e) {
       case "logKept":           result = actionLogKept(caller, payload);                     break;
       case "initiateTransfer":  result = actionInitiateTransfer(caller, payload);            break;
       case "respondToTransfer": result = actionRespondToTransfer(caller, payload);           break;
+      case "cancelTransfer":    result = actionCancelTransfer(caller, payload);              break;
       case "logNewbieHandoff":  result = actionLogNewbieHandoff(caller, payload);            break;
       case "returnFromNewbie":  result = actionReturnFromNewbie(caller, payload);            break;
       case "reportLostDamaged": result = actionReportLostDamaged(caller, payload);           break;
@@ -473,7 +474,7 @@ function actionInitiateTransfer(caller, payload) {
 function actionRespondToTransfer(caller, payload) {
   const { transactionId, decision } = payload;
   if (!transactionId) throw new Error("transactionId is required.");
-  if (!["confirm", "decline"].includes(decision)) throw new Error("decision must be 'confirm' or 'decline'.");
+  if (!["confirm", "decline", "cancel"].includes(decision)) throw new Error("decision must be 'confirm', 'decline', or 'cancel'.");
 
   const txns    = getSheetData(SHEET_TRANSACTIONS);
   const pending = txns.find(t =>
@@ -482,8 +483,15 @@ function actionRespondToTransfer(caller, payload) {
     t.ActionType === "TransferInitiated"
   );
   if (!pending) throw new Error("Pending transfer not found or already resolved.");
-  if (String(pending.CounterpartyEmail).toLowerCase() !== caller.Email.toLowerCase()) {
-    throw new Error("You are not the designated recipient for this transfer.");
+  
+  if (decision === "cancel") {
+    if (String(pending.ActorEmail).toLowerCase() !== caller.Email.toLowerCase()) {
+      throw new Error("Only the sender who initiated the transfer can cancel it.");
+    }
+  } else {
+    if (String(pending.CounterpartyEmail).toLowerCase() !== caller.Email.toLowerCase()) {
+      throw new Error("You are not the designated recipient for this transfer.");
+    }
   }
 
   const device = getDeviceByLabel(pending.DeviceLabel);
@@ -512,7 +520,7 @@ function actionRespondToTransfer(caller, payload) {
       PhysicallyWithNote:   "", // clear newbie note on formal transfer
       LastUpdated:          ts
     });
-  } else {
+  } else if (decision === "decline") {
     appendRow(SHEET_TRANSACTIONS, {
       TransactionID:        newTxn,
       Timestamp:            ts,
@@ -524,6 +532,24 @@ function actionRespondToTransfer(caller, payload) {
       NewbieName:           "",
       Notes:                "Transfer declined by recipient.",
       TransferStatus:       "Declined",
+      LinkedTransactionID:  transactionId
+    });
+    updateRowCols(SHEET_DEVICES, device._rowIndex, {
+      HasPendingTransferTo: "",
+      LastUpdated:          ts
+    });
+  } else if (decision === "cancel") {
+    appendRow(SHEET_TRANSACTIONS, {
+      TransactionID:        newTxn,
+      Timestamp:            ts,
+      DeviceLabel:          pending.DeviceLabel,
+      ActionType:           "TransferCancelled",
+      ActorEmail:           caller.Email,
+      CameraModel:          "",
+      CounterpartyEmail:    pending.CounterpartyEmail,
+      NewbieName:           "",
+      Notes:                "Transfer cancelled by sender.",
+      TransferStatus:       "Cancelled",
       LinkedTransactionID:  transactionId
     });
     updateRowCols(SHEET_DEVICES, device._rowIndex, {
@@ -581,6 +607,24 @@ function actionLogNewbieHandoff(caller, payload) {
   _invalidateCache(); // devices list changed
 
   return { transactionId: txnId };
+}
+
+// ── cancelTransfer ────────────────────────────────────────────
+function actionCancelTransfer(caller, payload) {
+  const { deviceLabel } = payload;
+  if (!deviceLabel) throw new Error("deviceLabel is required.");
+  
+  const txns = getSheetData(SHEET_TRANSACTIONS);
+  const pending = txns.find(t => 
+    String(t.DeviceLabel) === deviceLabel && 
+    t.TransferStatus === "Pending" && 
+    t.ActionType === "TransferInitiated" &&
+    String(t.ActorEmail).toLowerCase() === caller.Email.toLowerCase()
+  );
+  if (!pending) throw new Error("No pending transfer found for this device initiated by you.");
+  
+  // Forward to respondToTransfer with "cancel" decision
+  return actionRespondToTransfer(caller, { transactionId: pending.TransactionID, decision: "cancel" });
 }
 
 // ── returnFromNewbie ────────────────────────────────────────────

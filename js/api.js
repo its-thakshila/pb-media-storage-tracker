@@ -55,6 +55,7 @@ const API = (() => {
     logKept:             (p)            => call("logKept",            p),
     initiateTransfer:    (p)            => call("initiateTransfer",   p),
     respondToTransfer:   (p)            => call("respondToTransfer",  p),
+    cancelTransfer:      (p)            => call("cancelTransfer",     p),
     logNewbieHandoff:    (p)            => call("logNewbieHandoff",   p),
     returnFromNewbie:    (p)            => call("returnFromNewbie",   p),
     reportLostDamaged:   (p)            => call("reportLostDamaged",  p),
