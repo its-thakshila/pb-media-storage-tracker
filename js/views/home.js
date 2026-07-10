@@ -211,12 +211,17 @@ const HomeView = (() => {
     });
   }
 
+  let isSubmitting = false;
+
   async function submitAddDevice() {
+    if (isSubmitting) return;
     const label    = document.getElementById('add-label').value.trim();
     const type     = document.getElementById('add-type').value;
     const capacity = document.getElementById('add-capacity').value.trim();
     const holder   = document.getElementById('add-holder').value;
     if (!label || !capacity) { Toast.show('Fill in all fields.', 'error'); return; }
+    
+    isSubmitting = true;
     try {
       Saving.show();
       await API.addDevice({ deviceLabel: label, deviceType: type, capacity, initialHolderEmail: holder });
@@ -227,6 +232,7 @@ const HomeView = (() => {
     } catch (err) {
       Toast.show(err.message, 'error');
     } finally {
+      isSubmitting = false;
       Saving.hide();
     }
   }
@@ -264,11 +270,14 @@ const HomeView = (() => {
   }
 
   async function submitApproveMember() {
+    if (isSubmitting) return;
     const email = document.getElementById('mm-email').value.trim().toLowerCase();
     const name  = document.getElementById('mm-name').value.trim();
     const role  = document.getElementById('mm-role').value;
     const title = document.getElementById('mm-title').value.trim();
     if (!email || !name) { Toast.show('Email and name are required.', 'error'); return; }
+    
+    isSubmitting = true;
     try {
       Saving.show();
       await API.approveMember({ email, name, role, title });
@@ -277,6 +286,7 @@ const HomeView = (() => {
     } catch (err) {
       Toast.show(err.message, 'error');
     } finally {
+      isSubmitting = false;
       Saving.hide();
     }
   }

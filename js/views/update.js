@@ -5,6 +5,7 @@
 const UpdateView = (() => {
 
   let _members = [];
+  let isSubmitting = false;
 
   async function _ensureMembers() {
     if (!_members.length) _members = await API.listMembers();
@@ -28,7 +29,9 @@ const UpdateView = (() => {
   }
 
   async function submitKept(deviceLabel) {
+    if (isSubmitting) return;
     const reason = document.getElementById('kept-reason').value.trim();
+    isSubmitting = true;
     try {
       Saving.show();
       HomeView.invalidateCache();
@@ -39,6 +42,7 @@ const UpdateView = (() => {
     } catch (err) {
       Toast.show(err.message, 'error');
     } finally {
+      isSubmitting = false;
       Saving.hide();
     }
   }
@@ -79,9 +83,12 @@ const UpdateView = (() => {
   }
 
   async function submitHandOver(deviceLabel) {
+    if (isSubmitting) return;
     const toEmail     = document.getElementById('ho-recipient').value;
     const cameraModel = document.getElementById('ho-camera').value.trim();
     const notes       = document.getElementById('ho-notes').value.trim();
+    
+    isSubmitting = true;
     try {
       Saving.show();
       HomeView.invalidateCache();
@@ -92,6 +99,7 @@ const UpdateView = (() => {
     } catch (err) {
       Toast.show(err.message, 'error');
     } finally {
+      isSubmitting = false;
       Saving.hide();
     }
   }
@@ -120,9 +128,12 @@ const UpdateView = (() => {
   }
 
   async function submitNewbie(deviceLabel) {
+    if (isSubmitting) return;
     const newbieName = document.getElementById('nb-name').value.trim();
     const notes      = document.getElementById('nb-notes').value.trim();
     if (!newbieName) { Toast.show("Enter the newbie's name.", 'error'); return; }
+    
+    isSubmitting = true;
     try {
       Saving.show();
       HomeView.invalidateCache();
@@ -133,6 +144,7 @@ const UpdateView = (() => {
     } catch (err) {
       Toast.show(err.message, 'error');
     } finally {
+      isSubmitting = false;
       Saving.hide();
     }
   }
@@ -159,7 +171,10 @@ const UpdateView = (() => {
   }
 
   async function submitReturnFromNewbie(deviceLabel) {
+    if (isSubmitting) return;
     const notes = document.getElementById('rfn-notes').value.trim();
+    
+    isSubmitting = true;
     try {
       Saving.show();
       HomeView.invalidateCache();
@@ -170,6 +185,7 @@ const UpdateView = (() => {
     } catch (err) {
       Toast.show(err.message, 'error');
     } finally {
+      isSubmitting = false;
       Saving.hide();
     }
   }
@@ -208,6 +224,8 @@ const UpdateView = (() => {
       confirmLabel: `${Icons.flag()} Yes, Report as ${status}`,
       confirmClass: 'btn-danger',
       onConfirm: async () => {
+        if (isSubmitting) return;
+        isSubmitting = true;
         try {
           Saving.show();
           HomeView.invalidateCache();
@@ -217,6 +235,7 @@ const UpdateView = (() => {
         } catch (err) {
           Toast.show(err.message, 'error');
         } finally {
+          isSubmitting = false;
           Saving.hide();
         }
       }
