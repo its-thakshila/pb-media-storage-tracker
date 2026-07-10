@@ -269,8 +269,32 @@ const Toast = {
 
 // ── Saving overlay ────────────────────────────────────────
 const Saving = {
-  show() { document.getElementById('saving-overlay').classList.add('visible'); },
-  hide() { document.getElementById('saving-overlay').classList.remove('visible'); }
+  show() {
+    document.getElementById('saving-overlay').classList.add('visible');
+    const footer = document.getElementById('modal-footer');
+    if (footer) {
+      footer.querySelectorAll('button').forEach(b => {
+        b.dataset.ogHtml = b.innerHTML;
+        b.disabled = true;
+        if (b.classList.contains('btn-primary') || b.classList.contains('btn-danger')) {
+          b.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle;"></span> Processing...`;
+        }
+      });
+    }
+  },
+  hide() {
+    document.getElementById('saving-overlay').classList.remove('visible');
+    const footer = document.getElementById('modal-footer');
+    if (footer) {
+      footer.querySelectorAll('button').forEach(b => {
+        b.disabled = false;
+        if (b.dataset.ogHtml) {
+          b.innerHTML = b.dataset.ogHtml;
+          delete b.dataset.ogHtml;
+        }
+      });
+    }
+  }
 };
 
 // ── Modal ─────────────────────────────────────────────────
