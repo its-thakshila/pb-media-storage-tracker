@@ -560,7 +560,7 @@ function actionRespondToTransfer(caller, payload) {
 
   // ── CRITICAL: update the original row's TransferStatus so it no longer
   // appears in getPendingActions (which filters on TransferStatus = "Pending")
-  const resolvedStatus = decision === "confirm" ? "Confirmed" : "Declined";
+  const resolvedStatus = decision === "confirm" ? "Confirmed" : (decision === "cancel" ? "Cancelled" : "Declined");
   updateCell(SHEET_TRANSACTIONS, pending._rowIndex, "TransferStatus", resolvedStatus);
   _invalidateCache(); // devices list (holder/pending) changed
 
