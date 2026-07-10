@@ -61,9 +61,12 @@ const HistoryView = (() => {
         return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
                  desc: `${Icons.pin()} ${esc(t.actorName)} kept the device` };
       case 'TransferInitiated':
-        // Always blue — transfer in flight between members
-        return { dotClass: 'dot-transfer',  badgeClass: 'badge-transfer',
+        // Yellow — transfer is currently pending
+        return { dotClass: 'dot-pending',   badgeClass: 'badge-pending',
                  desc: `${Icons.arrowRight()} ${esc(t.actorName)} to ${esc(t.counterpartyName)} (pending)` };
+      case 'TransferCancelled':
+        return { dotClass: 'dot-neutral',   badgeClass: 'badge-neutral',
+                 desc: `${Icons.x()} ${esc(t.actorName)} cancelled transfer to ${esc(t.counterpartyName)}` };
       case 'TransferConfirmed':
         // Green only when device reaches the Resource Coordinator; blue otherwise
         if (isRC(t.actorTitle)) {
